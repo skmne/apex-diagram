@@ -9,15 +9,74 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:apex-classes-view"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "apex-classes-bar",
+          "title": "Apex Diagram",
+          "icon": "resources/logo.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "apex-classes-view",
+        "contents": "No apex classes found"
+      }
+    ],
+    "views": {
+      "apex-classes-bar": [
+        {
+          "id": "apex-classes-view",
+          "name": "Apex Classes",
+          "icon": "resources/logo.svg",
+          "contextualTitle": "Apex Diagram"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "apex-diagram.helloWorld",
-        "title": "Hello World"
+        "command": "apex-classes-view.refreshEntry",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "apex-classes-view.addEntry",
+        "title": "Add",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apex-classes-view.removeEntry",
+        "title": "Delete",
+        "icon": "$(remove)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+          {
+              "command": "apex-classes-view.refreshEntry",
+              "when": "view == apex-classes-view",
+              "group": "navigation"
+          }
+      ],
+      "view/item/context": [
+        {
+          "command": "apex-classes-view.addEntry",
+          "when": "view == apex-classes-view && viewItem == add_context",
+          "group": "inline"
+        },
+        {
+          "command": "apex-classes-view.removeEntry",
+          "when": "view == apex-classes-view && viewItem == remove_context",
+          "group": "inline"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
