@@ -9,9 +9,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:apex-classes-view"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -41,6 +39,16 @@
     },
     "commands": [
       {
+        "command": "diagram-workspace.start",
+        "title": "Open Apex Diagram workspace",
+        "category": "Apex Diagram"
+      },
+      {
+        "command": "apex-classes-view.openWorkspace",
+        "title": "Show Diagram",
+        "icon": "$(gather)"
+      },
+      {
         "command": "apex-classes-view.refreshEntry",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -62,6 +70,11 @@
               "command": "apex-classes-view.refreshEntry",
               "when": "view == apex-classes-view",
               "group": "navigation"
+          },
+          {
+            "command": "apex-classes-view.openWorkspace",
+            "when": "view == apex-classes-view",
+            "group": "navigation"
           }
       ],
       "view/item/context": [
