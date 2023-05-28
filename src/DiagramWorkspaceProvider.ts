@@ -5,7 +5,7 @@ import * as fs from "fs";
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
 	private data: any;
-	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel | undefined = undefined;
+	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel;
 
 	private constructor(context: vscode.ExtensionContext) {
 		this.diagramWorkspaceWebviewPanel = vscode.window.createWebviewPanel(
@@ -17,7 +17,7 @@ export default class DiagramWorkspaceProvider {
 				retainContextWhenHidden: true,
 			}
 		);
-		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent();
+		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent(context);
 
 		this.diagramWorkspaceWebviewPanel.onDidDispose(this.destroy, null, context.subscriptions);
 	}
@@ -26,7 +26,7 @@ export default class DiagramWorkspaceProvider {
 		if (!DiagramWorkspaceProvider.instance) {
 			DiagramWorkspaceProvider.instance = new DiagramWorkspaceProvider(context);
 		} else {
-			DiagramWorkspaceProvider?.instance?.showDiagramWorkspace();
+			DiagramWorkspaceProvider.instance.showDiagramWorkspace();
 		}
 		return DiagramWorkspaceProvider.instance;
 	}
@@ -35,7 +35,7 @@ export default class DiagramWorkspaceProvider {
 		const columnToShowIn = vscode.window.activeTextEditor
 			? vscode.window.activeTextEditor.viewColumn
 			: undefined;
-		this.diagramWorkspaceWebviewPanel?.reveal(columnToShowIn);
+		this.diagramWorkspaceWebviewPanel.reveal(columnToShowIn);
 	}
 
 	public getWebviewPanel() {
@@ -51,43 +51,40 @@ export default class DiagramWorkspaceProvider {
 	}
 
 	public executeWebviewCommand(command: any, value: any) {
-		this.diagramWorkspaceWebviewPanel?.webview.postMessage({ command: command, value: value });
+		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: command, value: value });
 	}
 
-	private getWebviewContent() {
-		return `<!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Cat Coding</title>
-      </head>
-      <body>
-          <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-          <h1 id="lines-of-code-counter">0</h1>
-          <script>
-          const counter = document.getElementById('lines-of-code-counter');
-          // Handle the message inside the webview
-          window.addEventListener('message', event => {
-    
-            const message = event.data; // The JSON data our extension sent
-            console.log(message);
-              switch (message.command) {
-                      case 'Add':
-                          counter.textContent = message.value;
-                          break;
-                    case 'Remove':
-                          counter.textContent = message.value;
-                    break;
-              }
-          });
-      </script>
-      </body>
-      </html>`;
+	private getWebviewContent(context: vscode.ExtensionContext) {
+		const pathToWebDist = path.join(context.extensionPath, "./web/diagram-workspace2");
+		const pathToHtml = path.join(pathToWebDist, "index.html");
+
+		let html = fs.readFileSync(pathToHtml).toString();
+
+		html = this.modifyHtmlWithWebviewUri(html, pathToWebDist, /(<script\s+src=")([^"]+)(".*?><\/script>)/gm, 2);
+		return html;
+	}
+
+	private modifyHtmlWithWebviewUri(
+		html: string,
+		pathToWebDist: string,
+		sourceRegex: RegExp,
+		matchIndex: 2
+	): string {
+		let newScriptSrc;
+		let match: RegExpExecArray | null;
+
+		while ((match = sourceRegex.exec(html)) !== null) {
+			const matchedPath: string = match[matchIndex];
+			newScriptSrc = this.diagramWorkspaceWebviewPanel.webview.asWebviewUri(
+				vscode.Uri.file(path.join(pathToWebDist, matchedPath))
+			);
+			html = html.replace(`${matchedPath}`, newScriptSrc.toString());
+		}
+
+		return html;
 	}
 
 	private destroy() {
-		this.diagramWorkspaceWebviewPanel = undefined;
 		this.data = undefined;
 		DiagramWorkspaceProvider.instance = null;
 	}

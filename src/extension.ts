@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
 import { ApexClassTreeDataProvider } from "./ApexClassTreeDataProvider";
-import { Webview } from "vscode";
-
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -40,6 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		vscode.window.showInformationMessage(`Successfully added ${node.label}.`);
 	});
+
 	vscode.commands.registerCommand("apex-classes-view.removeEntry", (node: any) => {
 		node.contextValue = "add_context";
 		apexClassesTreeProvider.refreshItem(node);
@@ -48,6 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		vscode.window.showInformationMessage(`Successfully remove ${node.label}.`);
 	});
+
 	vscode.commands.registerCommand("apex-classes-view.openWorkspace", (node: any) =>
 		vscode.commands.executeCommand("diagram-workspace.start")
 	);
@@ -55,7 +55,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("diagram-workspace.start", () => {
 			vscode.commands.executeCommand("apex-classes-view.focus");
-
 			return DiagramWorkspaceProvider.newInstance(context).getWebviewPanel();
 		})
 	);
