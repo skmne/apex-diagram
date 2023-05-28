@@ -55,7 +55,7 @@ export default class DiagramWorkspaceProvider {
 	}
 
 	private getWebviewContent(context: vscode.ExtensionContext) {
-		const pathToWebDist = path.join(context.extensionPath, "./web/diagram-workspace2");
+		const pathToWebDist = path.join(context.extensionPath, "./web/diagram-workspace");
 		const pathToHtml = path.join(pathToWebDist, "index.html");
 
 		let html = fs.readFileSync(pathToHtml).toString();
