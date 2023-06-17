@@ -3,12 +3,86 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Cat Coding</title>
+		<title>UML Apex Diagram</title>
 	</head>
-	<body>
-		<img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-		<h1 id="lines-of-code-counter">0</h1>
 
-		<script src="./index.js" type="module"></script>
+	<script src="./diagram/dist/main.js"></script>
+	<style>
+		:root {
+			--vscode-button-foreground: #f7f8f8;
+			--vscode-button-background: #2eb3db;
+			--vscode-font-family: "Arial, Helvetica, sans-serif";
+			--vscode-font-size: 15sp;
+			--vscode-button-hoverBackground: #0a6786;
+		}
+
+		a {
+			color: var(--vscode-button-foreground);
+			background: var(--vscode-button-background);
+			font-family: var(--vscode-font-family);
+			font-weight: var(--vscode-font-weight);
+			font-size: var(--vscode-font-size);
+			padding: 4px;
+			border-radius: 2px;
+			box-sizing: border-box;
+			text-align: center;
+			cursor: pointer;
+			justify-content: center;
+			align-items: center;
+		}
+		a:hover {
+			background: var(--vscode-button-hoverBackground);
+			color: var(--vscode-button-foreground);
+		}
+		.hidden {
+			/*visibility: hidden !important;*/
+		}
+		#container {
+			width: 100%;
+			min-height: 100%;
+			margin: 0;
+		}
+		svg {
+			background: linear-gradient(-90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+				linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+				linear-gradient(-90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+				linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+				linear-gradient(transparent 3px, transparent 3px, transparent 78px, transparent 78px),
+				linear-gradient(-90deg, #aaaaaa2e 1px, transparent 1px),
+				linear-gradient(-90deg, transparent 3px, transparent 3px, transparent 78px, transparent 78px),
+				linear-gradient(#aaaaaa2e 1px, transparent 1px), transparent;
+			background-size: 4px 4px, 4px 4px, 80px 80px, 80px 80px, 80px 80px, 80px 80px, 80px 80px, 80px 80px;
+		}
+
+		body {
+			height: calc(100vh);
+			margin: 0;
+		}
+		html {
+			overflow: hidden;
+		}
+		header {
+			padding: 0.67rem;
+		}
+	</style>
+
+	<body>
+		<header id="header">
+			<div>
+				<a id="zoomIn">Zoom in</a>
+				<a id="zoomOut">Zoom out</a>
+				<a id="resetZoom">Reset zoom</a>
+				<a id="panLeft">Pan left</a>
+				<a id="panRight">Pan right</a>
+				<a id="center">Center</a>
+				<a id="export">Export</a>
+			</div>
+		</header>
+
+		<div id="container" style="width: 100%; min-height: 100%">
+			<svg id="uml-diagram"></svg>
+		</div>
 	</body>
+
+	<script src="./index.js" type="module"></script>
 </html>
