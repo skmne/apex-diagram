@@ -4,8 +4,9 @@ export default class LinksBuilder {
 	#data = [];
 	#nodeWidth;
 	#nodeHeigth;
-	#links;
+	#links = [];
 	#arrows;
+	#linkContainer;
 	#editorForeground = "var(--vscode-editor-foreground)";
 	#arrowSize = 10;
 
@@ -14,11 +15,17 @@ export default class LinksBuilder {
 		this.#nodeHeigth = nodeHeigth;
 		this.#data = data;
 	}
+	addLinks(newLinks) {
+		console.log(newLinks);
+		this.#data.links = [...this.#data.links, ...newLinks];
+		this.#links = this.#createLinks(this.#data.links);
+		this.update();
+	}
 
 	build(rootGroupContainer) {
-		const createLinkContainer = this.#createLinksContainer(rootGroupContainer);
+		this.#linkContainer = this.#createLinksContainer(rootGroupContainer);
 		this.#arrows = this.#createArrows(rootGroupContainer);
-		this.#links = this.#createLinks(createLinkContainer);
+		this.#links = this.#createLinks(this.#data.links);
 	}
 
 	update() {
@@ -33,10 +40,10 @@ export default class LinksBuilder {
 		return groupContainer.append("g").attr("class", "links");
 	}
 
-	#createLinks(container) {
-		let links = container
+	#createLinks(links) {
+		let elementLinks = this.#linkContainer
 			.selectAll("line")
-			.data(this.#data.links)
+			.data(links)
 			.join("line")
 			.attr("x1", (d) => this.#sourceX(d) || 0)
 			.attr("y1", (d) => this.#sourceY(d) || 0)
@@ -70,7 +77,7 @@ export default class LinksBuilder {
 			.attr("stroke-width", 1)
 			.attr("stroke", this.#editorForeground);
 
-		return links;
+		return elementLinks;
 	}
 
 	#createArrows(groupContainer) {
@@ -114,56 +121,78 @@ export default class LinksBuilder {
 	}
 
 	#sourceX(d) {
-		if (Math.abs(d.source.y - d.target.y) <= this.#nodeHeigth) {
-			if (d.source.x > d.target.x) {
-				return d.source.x;
+		// console.log(d.source);
+		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
+		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
+		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
+		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+
+		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
+			if (sourceX > targetX) {
+				return sourceX;
 			} else {
-				return d.source.x + this.#nodeWidth;
+				return sourceX + this.#nodeWidth;
 			}
-		} else if (Math.abs(d.source.x - d.target.x) <= this.#nodeWidth + 20) {
-			return d.source.x + this.#nodeWidth / 2;
-		} else if (d.source.x > d.target.x) {
-			return d.source.x;
+		} else if (Math.abs(sourceX - targetX) <= this.#nodeWidth + 20) {
+			return sourceX + this.#nodeWidth / 2;
+		} else if (sourceX > targetX) {
+			return sourceX;
 		} else {
-			return d.source.x + this.#nodeWidth;
+			return sourceX + this.#nodeWidth;
 		}
 	}
 
 	#targetX(d) {
-		if (Math.abs(d.source.y - d.target.y) <= this.#nodeHeigth) {
-			if (d.source.x < d.target.x) {
-				return d.target.x;
+		// console.log(d.source);
+		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
+		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
+		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
+		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+
+		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
+			if (sourceX < targetX) {
+				return targetX;
 			} else {
-				return d.target.x + this.#nodeWidth;
+				return targetX + this.#nodeWidth;
 			}
-		} else if (Math.abs(d.source.x - d.target.x) <= this.#nodeWidth + 20) {
-			return d.target.x + this.#nodeWidth / 2;
-		} else if (d.source.x < d.target.x) {
-			return d.target.x;
-		} else if (d.source.x > d.target.x) {
-			return d.target.x + this.#nodeWidth;
+		} else if (Math.abs(sourceX - targetX) <= this.#nodeWidth + 20) {
+			return targetX + this.#nodeWidth / 2;
+		} else if (sourceX < targetX) {
+			return targetX;
+		} else if (sourceX > targetX) {
+			return targetX + this.#nodeWidth;
 		} else {
-			return d.target.x + this.#nodeWidth / 2;
+			return targetX + this.#nodeWidth / 2;
 		}
 	}
 
 	#sourceY(d) {
-		if (Math.abs(d.source.y - d.target.y) <= this.#nodeHeigth) {
-			return d.source.y + this.#nodeHeigth / 2;
-		} else if (d.source.y > d.target.y) {
-			return d.source.y;
+		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
+		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
+		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
+		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+
+		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
+			return sourceY + this.#nodeHeigth / 2;
+		} else if (sourceY > targetY) {
+			return sourceY;
 		} else {
-			return d.source.y + this.#nodeHeigth;
+			return sourceY + this.#nodeHeigth;
 		}
 	}
 
 	#targetY(d) {
-		if (Math.abs(d.source.y - d.target.y) <= this.#nodeHeigth) {
-			return d.target.y + this.#nodeHeigth / 2;
-		} else if (d.source.y > d.target.y) {
-			return d.target.y + this.#nodeHeigth;
-		} else if (d.source.y < d.target.y) {
-			return d.target.y;
+		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
+		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
+		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
+		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+
+		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
+			return targetY + this.#nodeHeigth / 2;
+		} else if (sourceY > targetY) {
+			return targetY + this.#nodeHeigth;
+		} else if (sourceY < targetY) {
+			return targetY;
 		}
 	}
 

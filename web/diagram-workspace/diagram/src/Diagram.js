@@ -20,6 +20,26 @@ class Diagram {
 		console.log(this.#width, this.#height);
 		this.#nodesBuilder = new NodesBuilder(); //todo rename... maybe will use builder pattern
 	}
+	addItems(newData) {
+		// this.#data.nodes.push(newData.nodes);
+		// console.log(this.#data.nodes);
+
+		newData.links.forEach((link) => {
+			link.source += this.#data.nodes.length;
+			link.target += this.#data.nodes.length;
+			link.vx = 0;
+			link.vy = 0;
+			link.x = 100;
+			link.y = 200;
+		});
+		this.#nodesBuilder.addNodes(newData.nodes);
+		this.#linksBuilder.addLinks(newData.links);
+
+		this.#nodesBuilder.setDragRectangle(drag(d3, this));
+
+		// this.#generateSimulation();
+	}
+
 	setData(data) {
 		this.#data = data;
 		this.#nodesBuilder.setData(this.#data);

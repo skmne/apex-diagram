@@ -18,6 +18,13 @@ export default class NodesBuilder {
 	#fontColor = "var(--vscode-editor-foreground)";
 
 	constructor() {}
+
+	addNodes(newNodes) {
+		this.#data.nodes = [...this.#data.nodes, ...newNodes];
+		console.log(this.#data.nodes);
+		this.#createNodes(this.#data.nodes);
+	}
+
 	setData(data) {
 		this.#data = data;
 	}
@@ -43,7 +50,11 @@ export default class NodesBuilder {
 	build(rootGroup) {
 		this.#rootGroup = rootGroup;
 		this.#nodesContainer = this.#createNodesContainer(this.#rootGroup);
-		this.#nodeGroups = this.#createGroupNodes();
+		this.#createNodes(this.#data.nodes);
+	}
+
+	#createNodes(nodes) {
+		this.#nodeGroups = this.#createGroupNodes(nodes);
 		this.#rectangles = this.#createRectangles();
 		this.#textHeaders = this.#createTexts();
 		this.#createTitles();
@@ -75,10 +86,10 @@ export default class NodesBuilder {
 		return rootGroup.append("g").attr("class", "nodes");
 	}
 
-	#createGroupNodes() {
+	#createGroupNodes(nodes) {
 		return this.#nodesContainer
 			.selectAll("g")
-			.data(this.#data.nodes)
+			.data(nodes)
 			.join("g")
 			.attr("width", this.#nodeWidth)
 			.attr("height", this.#nodeHeigth)

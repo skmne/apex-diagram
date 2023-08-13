@@ -2,7 +2,7 @@
   "name": "diagram",
   "description": "Diagram generates UML class diagram based on the apex code",
   "version": "0.0.1",
-  "scripts": { "build": "webpack"},
+  "scripts": { "build": "webpack", "watch": "webpack --watch"},
   "main": "dist/main.js",
   "devDependencies": {
     "webpack": "^5.87.0",

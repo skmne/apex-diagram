@@ -364,3 +364,33 @@ function getData() {
 		],
 	};
 }
+
+document.getElementById("add").addEventListener("click", () => {
+	console.log("add");
+	let newDataMock = {
+		nodes: [
+			{
+				namespace: null,
+				name: "fflib_Constructor NEW",
+				key: "fflib_Constructor_NEW",
+				x: 400,
+				y: 100,
+			},
+			{
+				namespace: null,
+				name: "fflib_Selector NEW",
+				key: "fflib_Selector_New",
+				x: 100,
+				y: 100,
+			},
+		],
+		links: [
+			{
+				source: 0,
+				target: 1,
+				type: "Realization",
+			},
+		],
+	};
+	diagram.addItems(newDataMock);
+});
