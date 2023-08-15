@@ -121,12 +121,11 @@ export default class LinksBuilder {
 	}
 
 	#sourceX(d) {
-		// console.log(d.source);
-		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
-		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
-		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
-		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
-
+		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).x;
+		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).y;
+		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).x;
+		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).y;
+		// debugger;
 		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
 			if (sourceX > targetX) {
 				return sourceX;
@@ -143,11 +142,10 @@ export default class LinksBuilder {
 	}
 
 	#targetX(d) {
-		// console.log(d.source);
-		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
-		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
-		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
-		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).x;
+		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).y;
+		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).x;
+		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).y;
 
 		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
 			if (sourceX < targetX) {
@@ -167,10 +165,10 @@ export default class LinksBuilder {
 	}
 
 	#sourceY(d) {
-		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
-		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
-		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
-		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).x;
+		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).y;
+		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).x;
+		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).y;
 
 		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
 			return sourceY + this.#nodeHeigth / 2;
@@ -182,10 +180,10 @@ export default class LinksBuilder {
 	}
 
 	#targetY(d) {
-		const sourceX = d.source.index !== undefined ? d.source.x : this.#data.nodes[d.source].x;
-		const sourceY = d.source.index !== undefined ? d.source.y : this.#data.nodes[d.source].y;
-		const targetX = d.source.index !== undefined ? d.target.x : this.#data.nodes[d.target].x;
-		const targetY = d.source.index !== undefined ? d.target.y : this.#data.nodes[d.target].y;
+		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).x;
+		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).y;
+		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).x;
+		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).y;
 
 		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
 			return targetY + this.#nodeHeigth / 2;
@@ -194,6 +192,11 @@ export default class LinksBuilder {
 		} else if (sourceY < targetY) {
 			return targetY;
 		}
+	}
+
+	#getNodeByKey(nodeKey) {
+		const currentNode = this.#data.nodes.find((item) => item.id === nodeKey);
+		return currentNode;
 	}
 
 	#getSourceVector(d) {

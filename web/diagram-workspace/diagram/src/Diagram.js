@@ -21,21 +21,11 @@ class Diagram {
 		this.#nodesBuilder = new NodesBuilder(); //todo rename... maybe will use builder pattern
 	}
 	addItems(newData) {
-		// this.#data.nodes.push(newData.nodes);
-		// console.log(this.#data.nodes);
-
-		newData.links.forEach((link) => {
-			link.source += this.#data.nodes.length;
-			link.target += this.#data.nodes.length;
-			link.vx = 0;
-			link.vy = 0;
-			link.x = 100;
-			link.y = 200;
-		});
 		this.#nodesBuilder.addNodes(newData.nodes);
 		this.#linksBuilder.addLinks(newData.links);
 
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
+		// this.update();
 
 		// this.#generateSimulation();
 	}
@@ -55,7 +45,6 @@ class Diagram {
 		const rootGroupContainer = this.#createGroupContainer(this.#svg);
 		this.#nodesBuilder.build(rootGroupContainer);
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
-
 		this.#linksBuilder = new LinksBuilder(
 			this.#nodesBuilder.getNodeWidth(),
 			this.#nodesBuilder.getNodeHeigth(),
@@ -72,18 +61,29 @@ class Diagram {
 		this.#nodesBuilder.update();
 	}
 
+	attachNodeToLink() {
+		const attachedLinks = this.#data.links.map((link) => {
+			return {
+				source: this.#data.nodes.find((item) => item.id === link.source),
+				target: this.#data.nodes.find((item) => item.id === link.target),
+				type: link.type,
+			};
+		});
+		this.#data.links = attachedLinks;
+	}
+
 	#generateSimulation() {
 		return d3
 			.forceSimulation()
 			.nodes(this.#data.nodes)
-			.force("charge", d3.forceManyBody().strength(110))
 			.force(
-				"center",
-				d3.forceCenter(
-					this.#width / 2 - this.#nodesBuilder.getNodeWidth(),
-					this.#height / 2 - this.#nodesBuilder.getNodeHeigth()
-				)
+				"link",
+				d3.forceLink().id(function (d) {
+					return d.index;
+				})
 			)
+			.force("charge", d3.forceManyBody().strength(10))
+			.force("center", d3.forceCenter(this.#width / 2, this.#height / 2))
 			.force(
 				"x",
 				d3.forceX().x((d) => {
@@ -102,7 +102,6 @@ class Diagram {
 					return this.#getRectangleRadius();
 				})
 			)
-			.force("link", d3.forceLink().links(this.#data.links))
 			.on("end", () => {
 				console.log("*** manage animation ***");
 				// this.svg.classed("hidden", false);
