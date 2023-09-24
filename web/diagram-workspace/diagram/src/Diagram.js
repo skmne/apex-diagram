@@ -32,6 +32,8 @@ class Diagram {
 	removeItems(itemIds) {
 		this.#nodesBuilder.removeNodes(itemIds);
 		this.#linksBuilder.removeLinks(itemIds);
+
+		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 	}
 
 	setData(data) {
