@@ -25,6 +25,11 @@ export default class NodesBuilder {
 		this.#createNodes(this.#data.nodes);
 	}
 
+	removeNodes(nodesIds) {
+		this.#data.nodes = this.#data.nodes.filter((node) => !nodesIds.includes(node.id));
+		this.#createNodes(this.#data.nodes);
+	}
+
 	setData(data) {
 		this.#data = data;
 	}

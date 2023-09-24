@@ -26,8 +26,12 @@ class Diagram {
 
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		// this.update();
-
 		// this.#generateSimulation();
+	}
+
+	removeItems(itemIds) {
+		this.#nodesBuilder.removeNodes(itemIds);
+		this.#linksBuilder.removeLinks(itemIds);
 	}
 
 	setData(data) {

@@ -342,3 +342,8 @@ document.getElementById("add").addEventListener("click", () => {
 	};
 	diagram.addItems(newDataMock);
 });
+
+document.getElementById("remove").addEventListener("click", () => {
+	console.log("remove");
+	diagram.removeItems(["fflib_Selector_New", "fflib_Constructor_NEW"]);
+});

@@ -21,6 +21,13 @@ export default class LinksBuilder {
 		this.#links = this.#createLinks(this.#data.links);
 		this.update();
 	}
+	removeLinks(nodesIds) {
+		this.#data.links = this.#data.links.filter(
+			(link) => !nodesIds.includes(link.source) && !nodesIds.includes(link.target)
+		);
+		this.#links = this.#createLinks(this.#data.links);
+		this.update();
+	}
 
 	build(rootGroupContainer) {
 		this.#linkContainer = this.#createLinksContainer(rootGroupContainer);
