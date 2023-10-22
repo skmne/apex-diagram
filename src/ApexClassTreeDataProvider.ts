@@ -35,6 +35,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		for (const apexClass of this.apexClassMembers) {
 			apexClassTreeItems.push(
 				new ApexClassTreeItem(
+					apexClass.NamespacePrefix,
 					apexClass.Name,
 					apexClass.ApiVersion,
 					vscode.TreeItemCollapsibleState.None
@@ -46,17 +47,22 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 }
 
 class ApexClassTreeItem extends vscode.TreeItem {
+	id: string;
+	name: string;
 	tooltip: string;
 	description: string;
 	iconPath = new vscode.ThemeIcon("outline-view-icon");
 	contextValue: string = "add_context";
 
 	constructor(
+		public readonly prefix: any,
 		public readonly label: any,
 		private readonly version: any,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState
 	) {
 		super(label, collapsibleState);
+		this.id = prefix ? prefix + "." + label : label;
+		this.name = this.id;
 		this.tooltip = `${this.label}-v${this.version}`;
 		this.description = this.version;
 	}

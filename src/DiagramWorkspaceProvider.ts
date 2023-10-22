@@ -4,7 +4,7 @@ import * as fs from "fs";
 
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
-	private data: any;
+	private data: any = { nodes: [], links: [] };
 	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel;
 
 	private constructor(context: vscode.ExtensionContext) {
@@ -42,12 +42,25 @@ export default class DiagramWorkspaceProvider {
 		return this.diagramWorkspaceWebviewPanel;
 	}
 
-	public getData(): string {
+	public getData(): any {
 		return this.data;
 	}
 
 	public setData(newData: string): void {
 		this.data = newData;
+	}
+
+	public addNodes(data: any): void {
+		this.data.nodes = [...this.data.nodes, ...data.nodes]; // todo optimize - remove dublicate
+		this.diagramWorkspaceWebviewPanel.webview.postMessage({
+			command: "Add",
+			value: data,
+		});
+	}
+
+	public removeNodes(nodesIds: any[]): void {
+		this.data.nodes = this.data.nodes.filter((node: { id: any }) => !nodesIds.includes(node.id));
+		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodesIds });
 	}
 
 	public executeWebviewCommand(command: any, value: any) {

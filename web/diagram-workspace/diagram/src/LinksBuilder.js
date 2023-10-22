@@ -15,9 +15,9 @@ export default class LinksBuilder {
 		this.#nodeHeigth = nodeHeigth;
 		this.#data = data;
 	}
-	addLinks(newLinks) {
-		console.log(newLinks);
-		this.#data.links = [...this.#data.links, ...newLinks];
+	addLinks(newData) {
+		this.#data.nodes = [...this.#data.nodes, ...newData.nodes];
+		this.#data.links = [...this.#data.links, ...newData.links];
 		this.#links = this.#createLinks(this.#data.links);
 		this.update();
 	}

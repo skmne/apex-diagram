@@ -5,6 +5,8 @@ import { getSalesforceUserInfo } from "./sfdx/sfdx";
 import UserInfo from "./sfdx/UserInfo";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import ApexClass from "./salesforceAPI/ApexClass";
+import { parseDependency } from "./dependencyAnalaizer";
+import { DiagrammModel } from "./DiagrammModel";
 
 export async function activate(context: vscode.ExtensionContext) {
 	const rootPath: any =
@@ -30,20 +32,35 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh());
 
-	vscode.commands.registerCommand("apex-classes-view.addEntry", (node: any) => {
+	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: any) => {
 		node.contextValue = "remove_context";
 		apexClassesTreeProvider.refreshItem(node);
+		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
+		let newData = new DiagrammModel();
+		newData.nodes = [node];
 
-		DiagramWorkspaceProvider.newInstance(context).executeWebviewCommand("Add", node.label);
+		let currentData = diagramWorkspace.getData();
+		currentData.nodes = [...currentData.nodes, node];
 
-		vscode.window.showInformationMessage(`Successfully added ${node.label}.`);
+		const apexClassNames = currentData.nodes.map((node: any) => node.name);
+		console.log(apexClassNames);
+		if (apexClassNames.length > 1) {
+			const apexSymbolTable: any = await tooling.generateApexSymbolTable(apexClassNames);
+			const dependencyData = parseDependency(apexSymbolTable.records);
+
+			newData.links = dependencyData.links;
+			console.log("Dependency  = ", dependencyData);
+		}
+		diagramWorkspace.addNodes(newData);
+
+		vscode.window.showInformationMessage(`Successfully added ${node.id}.`);
 	});
 
 	vscode.commands.registerCommand("apex-classes-view.removeEntry", (node: any) => {
 		node.contextValue = "add_context";
 		apexClassesTreeProvider.refreshItem(node);
 
-		DiagramWorkspaceProvider.newInstance(context).executeWebviewCommand("Remove", node.label);
+		DiagramWorkspaceProvider.newInstance(context).removeNodes([node.id]);
 
 		vscode.window.showInformationMessage(`Successfully remove ${node.label}.`);
 	});

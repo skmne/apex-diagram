@@ -21,8 +21,8 @@ class Diagram {
 		this.#nodesBuilder = new NodesBuilder(); //todo rename... maybe will use builder pattern
 	}
 	addItems(newData) {
-		this.#nodesBuilder.addNodes(newData.nodes);
-		this.#linksBuilder.addLinks(newData.links);
+		this.#nodesBuilder.addNodes(newData);
+		this.#linksBuilder.addLinks(newData);
 
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		// this.update();

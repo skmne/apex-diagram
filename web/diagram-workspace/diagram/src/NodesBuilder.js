@@ -19,10 +19,11 @@ export default class NodesBuilder {
 
 	constructor() {}
 
-	addNodes(newNodes) {
-		this.#data.nodes = [...this.#data.nodes, ...newNodes];
+	addNodes(newData) {
+		this.#data.nodes = [...this.#data.nodes, ...newData.nodes];
 		console.log(this.#data.nodes);
 		this.#createNodes(this.#data.nodes);
+		this.update();
 	}
 
 	removeNodes(nodesIds) {

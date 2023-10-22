@@ -44,19 +44,12 @@ window.addEventListener("message", (event) => {
 	switch (message.command) {
 		case "Add":
 			console.log("add");
-			diagram.addItems({
-				nodes: [
-					{
-						name: message.value,
-						id: message.value,
-					},
-				],
-				links: [],
-			});
+			console.log(message.value);
+			diagram.addItems(message.value);
 			break;
 		case "Remove":
 			console.log("remove");
-			diagram.removeItems([message.value]);
+			diagram.removeItems(message.value);
 			break;
 	}
 });
