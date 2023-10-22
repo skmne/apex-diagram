@@ -1,12 +1,21 @@
 import * as vscode from "vscode";
 import { ApexClassTreeDataProvider } from "./ApexClassTreeDataProvider";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
+import { getSalesforceUserInfo } from "./sfdx";
+import UserInfo from "./models/UserInfo";
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	const rootPath: any =
 		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 			? vscode.workspace.workspaceFolders[0].uri.fsPath
 			: undefined;
+
+	if (!rootPath) {
+		throw Error("salesforce project was not found");
+	}
+
+	const userInfo: UserInfo = await getSalesforceUserInfo(rootPath);
+	vscode.window.showInformationMessage("user info = " + userInfo.username);
 
 	const data: Array<any> = [
 		{ name: "Account", version: "v54" },
