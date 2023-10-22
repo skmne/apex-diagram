@@ -34,7 +34,11 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		const apexClassTreeItems = [];
 		for (const apexClass of this.apexClassMembers) {
 			apexClassTreeItems.push(
-				new ApexClassTreeItem(apexClass.name, apexClass.version, vscode.TreeItemCollapsibleState.None)
+				new ApexClassTreeItem(
+					apexClass.Name,
+					apexClass.ApiVersion,
+					vscode.TreeItemCollapsibleState.None
+				)
 			);
 		}
 		return apexClassTreeItems;
@@ -53,7 +57,7 @@ class ApexClassTreeItem extends vscode.TreeItem {
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState
 	) {
 		super(label, collapsibleState);
-		this.tooltip = `${this.label}-${this.version}`;
+		this.tooltip = `${this.label}-v${this.version}`;
 		this.description = this.version;
 	}
 }

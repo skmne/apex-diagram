@@ -1,7 +1,7 @@
 import { drag } from "d3";
 
 export default class NodesBuilder {
-	#data;
+	#data = { nodes: [], links: [] };
 	#rootGroup;
 	#nodesContainer;
 	#nodeWidth = 160;

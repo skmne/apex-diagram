@@ -1,5 +1,5 @@
-import UserInfo from "./models/UserInfo";
-import { execShell } from "./terminal";
+import UserInfo from "./UserInfo";
+import { execShell } from "../terminal";
 
 const DISPLAY_USER_COMMAND: string = "sf org display user --json";
 

@@ -1,8 +1,10 @@
 import * as vscode from "vscode";
 import { ApexClassTreeDataProvider } from "./ApexClassTreeDataProvider";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
-import { getSalesforceUserInfo } from "./sfdx";
-import UserInfo from "./models/UserInfo";
+import { getSalesforceUserInfo } from "./sfdx/sfdx";
+import UserInfo from "./sfdx/UserInfo";
+import { ToolingApi } from "./salesforceAPI/salesforceClient";
+import ApexClass from "./salesforceAPI/ApexClass";
 
 export async function activate(context: vscode.ExtensionContext) {
 	const rootPath: any =
@@ -16,21 +18,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const userInfo: UserInfo = await getSalesforceUserInfo(rootPath);
 	vscode.window.showInformationMessage("user info = " + userInfo.username);
+	const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken);
+	const apexClasses: ApexClass[] = await tooling.getApexClasses();
 
-	const data: Array<any> = [
-		{ name: "Account", version: "v54" },
-		{ name: "BoatDataService", version: "v54" },
-		{ name: "GenerateDataTests", version: "v54" },
-		{ name: "fflib_SObjectDescribe", version: "v54" },
-		{ name: "fflib_SObjectDomain", version: "v54" },
-		{ name: "fflib_ISelectorFactory", version: "v54" },
-		{ name: "fflib_Application", version: "v54" },
-		{ name: "fflib_ISObjects", version: "v54" },
-		{ name: "BaseApexClass", version: "v54" },
-		{ name: "fflib_SObjectSelector", version: "v54" },
-	];
-
-	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, data);
+	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, apexClasses);
 
 	vscode.window.createTreeView("apex-classes-view", {
 		treeDataProvider: apexClassesTreeProvider,

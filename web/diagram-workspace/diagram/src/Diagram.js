@@ -8,7 +8,7 @@ class Diagram {
 	#nodesBuilder;
 	#linksBuilder;
 
-	#data = [];
+	#data = { nodes: [], links: [] };
 	#svg;
 
 	#width = 800;

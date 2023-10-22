@@ -17,20 +17,6 @@ window.addEventListener(
 	true
 );
 
-// Handle the message inside the webview
-window.addEventListener("message", (event) => {
-	const message = event.data; // The JSON data our extension sent
-	console.log(message);
-	switch (message.command) {
-		case "Add":
-			console.log("add");
-			break;
-		case "Remove":
-			console.log("remove");
-			break;
-	}
-});
-
 function setSvgSize(svgElement, width, height) {
 	if (svgElement) {
 		svgElement.setAttribute("width", width);
@@ -39,7 +25,7 @@ function setSvgSize(svgElement, width, height) {
 }
 
 const diagram = new MyLibrary.default(svgElement);
-diagram.setData(getData());
+// diagram.setData(getData());
 diagram.setNodeSize(100, 50);
 diagram.setStyle({
 	foreground: "var(--vscode-editor-foreground)",
@@ -50,6 +36,65 @@ diagram.setStyle({
 });
 
 diagram.build();
+
+// Handle the message inside the webview
+window.addEventListener("message", (event) => {
+	const message = event.data; // The JSON data our extension sent
+	console.log(message);
+	switch (message.command) {
+		case "Add":
+			console.log("add");
+			diagram.addItems({
+				nodes: [
+					{
+						name: message.value,
+						id: message.value,
+					},
+				],
+				links: [],
+			});
+			break;
+		case "Remove":
+			console.log("remove");
+			diagram.removeItems([message.value]);
+			break;
+	}
+});
+
+document.getElementById("add").addEventListener("click", () => {
+	console.log("add");
+	let newDataMock = {
+		nodes: [
+			{
+				namespace: null,
+				name: "fflib_Constructor NEW",
+				id: "fflib_Constructor_NEW",
+				x: 400,
+				y: 100,
+			},
+			{
+				namespace: null,
+				name: "fflib_Selector NEW",
+				id: "fflib_Selector_New",
+				x: 100,
+				y: 100,
+			},
+		],
+		links: [
+			{
+				source: "fflib_Constructor_NEW",
+				target: "fflib_Selector_New",
+				type: "Realization",
+			},
+		],
+	};
+	diagram.addItems(newDataMock);
+});
+
+document.getElementById("remove").addEventListener("click", () => {
+	console.log("remove");
+	diagram.removeItems(["fflib_Selector_New", "fflib_Constructor_NEW"]);
+});
 
 function getData() {
 	return {
@@ -312,38 +357,3 @@ function getData() {
 		],
 	};
 }
-
-document.getElementById("add").addEventListener("click", () => {
-	console.log("add");
-	let newDataMock = {
-		nodes: [
-			{
-				namespace: null,
-				name: "fflib_Constructor NEW",
-				id: "fflib_Constructor_NEW",
-				x: 400,
-				y: 100,
-			},
-			{
-				namespace: null,
-				name: "fflib_Selector NEW",
-				id: "fflib_Selector_New",
-				x: 100,
-				y: 100,
-			},
-		],
-		links: [
-			{
-				source: "fflib_Constructor_NEW",
-				target: "fflib_Selector_New",
-				type: "Realization",
-			},
-		],
-	};
-	diagram.addItems(newDataMock);
-});
-
-document.getElementById("remove").addEventListener("click", () => {
-	console.log("remove");
-	diagram.removeItems(["fflib_Selector_New", "fflib_Constructor_NEW"]);
-});

@@ -1,7 +1,7 @@
 import Vector from "./Vector.js";
 
 export default class LinksBuilder {
-	#data = [];
+	#data = { nodes: [], links: [] };
 	#nodeWidth;
 	#nodeHeigth;
 	#links = [];
