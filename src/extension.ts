@@ -32,15 +32,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh());
 
-	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: any) => {
-		node.contextValue = "remove_context";
-		apexClassesTreeProvider.refreshItem(node);
+	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: any, selectedNodes: any) => {
+		if (!selectedNodes) {
+			selectedNodes = [node];
+		}
+
+		selectedNodes.forEach((node: any) => {
+			node.contextValue = "remove_context";
+		});
+		apexClassesTreeProvider.refreshItem(selectedNodes);
 		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
 		let newData = new DiagrammModel();
-		newData.nodes = [node];
+		newData.nodes = selectedNodes;
 
 		let currentData = diagramWorkspace.getData();
-		currentData.nodes = [...currentData.nodes, node];
+		currentData.nodes = [...currentData.nodes, ...selectedNodes];
 
 		const apexClassNames = currentData.nodes.map((node: any) => node.name);
 		console.log(apexClassNames);
@@ -53,16 +59,22 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		diagramWorkspace.addNodes(newData);
 
-		vscode.window.showInformationMessage(`Successfully added ${node.id}.`);
+		vscode.window.showInformationMessage(`Successfully added ${selectedNodes.length}.`);
 	});
 
-	vscode.commands.registerCommand("apex-classes-view.removeEntry", (node: any) => {
-		node.contextValue = "add_context";
-		apexClassesTreeProvider.refreshItem(node);
+	vscode.commands.registerCommand("apex-classes-view.removeEntry", (node: any, selectedNodes: any) => {
+		if (!selectedNodes) {
+			selectedNodes = [node];
+		}
 
-		DiagramWorkspaceProvider.newInstance(context).removeNodes([node.id]);
+		selectedNodes.forEach((node: any) => {
+			node.contextValue = "add_context";
+		});
+		apexClassesTreeProvider.refreshItem(selectedNodes);
 
-		vscode.window.showInformationMessage(`Successfully remove ${node.label}.`);
+		DiagramWorkspaceProvider.newInstance(context).removeNodes(selectedNodes.map((item: any) => item.id));
+
+		vscode.window.showInformationMessage(`Successfully remove ${selectedNodes.length}.`);
 	});
 
 	vscode.commands.registerCommand("apex-classes-view.openWorkspace", (node: any) =>

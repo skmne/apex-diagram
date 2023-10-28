@@ -13,8 +13,10 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		this._onDidChangeTreeData.fire();
 	}
 
-	refreshItem(node: ApexClassTreeItem): void {
-		this._onDidChangeTreeData.fire(node);
+	refreshItem(nodes: ApexClassTreeItem[]): void {
+		nodes.forEach((node) => {
+			this._onDidChangeTreeData.fire(node);
+		});
 	}
 
 	getTreeItem(element: ApexClassTreeItem): vscode.TreeItem {
