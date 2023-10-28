@@ -18,7 +18,7 @@ class Diagram {
 		this.#width = svgElement.getAttribute("width");
 		this.#height = svgElement.getAttribute("height");
 		console.log(this.#width, this.#height);
-		this.#nodesBuilder = new NodesBuilder(); //todo rename... maybe will use builder pattern
+		this.#nodesBuilder = new NodesBuilder(this.#width); //todo rename... maybe will use builder pattern
 	}
 	addItems(newData) {
 		this.#nodesBuilder.addNodes(newData);
@@ -26,7 +26,7 @@ class Diagram {
 
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		// this.update();
-		// this.#generateSimulation();
+		// this.#generateSimulation(newData.nodes);
 	}
 
 	removeItems(itemIds) {
@@ -57,7 +57,7 @@ class Diagram {
 			this.#data
 		);
 		this.#linksBuilder.build(rootGroupContainer);
-		this.#generateSimulation();
+		this.#generateSimulation(this.#data.nodes);
 
 		initZoom(d3, this.#width, this.#height);
 	}
@@ -78,10 +78,10 @@ class Diagram {
 		this.#data.links = attachedLinks;
 	}
 
-	#generateSimulation() {
+	#generateSimulation(nodes) {
 		return d3
 			.forceSimulation()
-			.nodes(this.#data.nodes)
+			.nodes(nodes)
 			.force(
 				"link",
 				d3.forceLink().id(function (d) {

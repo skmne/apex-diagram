@@ -22,6 +22,7 @@ export default class LinksBuilder {
 		this.update();
 	}
 	removeLinks(nodesIds) {
+		this.#data.nodes = this.#data.nodes.filter((node) => !nodesIds.includes(node.id));
 		this.#data.links = this.#data.links.filter(
 			(link) => !nodesIds.includes(link.source) && !nodesIds.includes(link.target)
 		);
@@ -37,10 +38,22 @@ export default class LinksBuilder {
 
 	update() {
 		this.#links
-			.attr("x1", (d) => this.#getSourceVector(d).getX())
-			.attr("y1", (d) => this.#getSourceVector(d).getY())
-			.attr("x2", (d) => this.#getTargetVector(d).getX())
-			.attr("y2", (d) => this.#getTargetVector(d).getY());
+			.attr("x1", (d) => {
+				d.x1 = this.#getSourceVector(d).getX();
+				return d.x1;
+			})
+			.attr("y1", (d) => {
+				d.y1 = this.#getSourceVector(d).getY();
+				return d.y1;
+			})
+			.attr("x2", (d) => {
+				d.x2 = this.#getTargetVector(d).getX();
+				return d.x2;
+			})
+			.attr("y2", (d) => {
+				d.y2 = this.#getTargetVector(d).getY();
+				return d.y2;
+			});
 	}
 
 	#createLinksContainer(groupContainer) {
@@ -52,15 +65,21 @@ export default class LinksBuilder {
 			.selectAll("line")
 			.data(links)
 			.join("line")
-			.attr("x1", (d) => this.#sourceX(d) || 0)
-			.attr("y1", (d) => this.#sourceY(d) || 0)
+			.attr("x1", (d) => {
+				d.x1 = this.#sourceX(d) || 0;
+				return d.x1;
+			})
+			.attr("y1", (d) => {
+				d.y1 = this.#sourceY(d) || 0;
+				return d.y1;
+			})
 			.attr("x2", (d) => {
-				let x = this.#targetX(d) || 0;
-
-				return x;
+				d.x2 = this.#targetX(d) || 0;
+				return d.x2;
 			})
 			.attr("y2", (d) => {
-				return this.#targetY(d) || 0;
+				d.y2 = this.#targetY(d) || 0;
+				return d.y2;
 			})
 			.attr("marker-end", (d) => {
 				let marker = "";
