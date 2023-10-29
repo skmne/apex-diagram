@@ -30,6 +30,13 @@
     "views": {
       "apex-classes-bar": [
         {
+          "id": "active-apex-classes-view",
+          "name": "Active Apex Classes",
+          "icon": "resources/logo.svg",
+          "contextualTitle": "Apex Diagram",
+          "visibility":"collapsed"
+        },
+        {
           "id": "apex-classes-view",
           "name": "Apex Classes",
           "icon": "resources/logo.svg",
@@ -59,7 +66,7 @@
         "icon": "$(add)"
       },
       {
-        "command": "apex-classes-view.removeEntry",
+        "command": "active-apex-classes-view.removeEntry",
         "title": "Delete",
         "icon": "$(remove)"
       }
@@ -84,8 +91,8 @@
           "group": "inline"
         },
         {
-          "command": "apex-classes-view.removeEntry",
-          "when": "view == apex-classes-view && viewItem == remove_context",
+          "command": "active-apex-classes-view.removeEntry",
+          "when": "view == active-apex-classes-view && viewItem == remove_context",
           "group": "inline"
         }
       ]

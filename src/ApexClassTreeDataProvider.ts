@@ -9,11 +9,37 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 	readonly onDidChangeTreeData: vscode.Event<ApexClassTreeItem | undefined | null | void> =
 		this._onDidChangeTreeData.event;
 
+	private apexClassTreeItems: ApexClassTreeItem[] = [];
+
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
 	}
 
-	refreshItem(nodes: ApexClassTreeItem[]): void {
+	add(nodes: ApexClassTreeItem[]): void {
+		this.apexClassTreeItems = [...this.apexClassTreeItems, ...nodes];
+		this.apexClassTreeItems.sort(this.sortByName);
+		this.refresh();
+	}
+
+	remove(nodeIds: string[]): void {
+		this.apexClassTreeItems = this.apexClassTreeItems.filter((item) => !nodeIds.includes(item.id));
+		console.log("remove items", this.apexClassTreeItems);
+		// this.refreshItems(this.apexClassTreeItems);
+		this.refresh();
+	}
+	sortByName(a: any, b: any) {
+		const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+		const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+		if (nameA < nameB) {
+			return -1;
+		}
+		if (nameA > nameB) {
+			return 1;
+		}
+		return 0;
+	}
+
+	refreshItems(nodes: ApexClassTreeItem[]): void {
 		nodes.forEach((node) => {
 			this._onDidChangeTreeData.fire(node);
 		});
@@ -29,9 +55,13 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 			return Promise.resolve([]);
 		}
 
-		return Promise.resolve(this.getApexClassTreeItems());
+		if (this.apexClassTreeItems.length === 0) {
+			this.apexClassTreeItems = this.getApexClassTreeItems();
+		}
+		this.apexClassTreeItems.sort(this.sortByName);
+		return Promise.resolve(this.apexClassTreeItems);
 	}
-
+	//todo refactoring
 	private getApexClassTreeItems(): ApexClassTreeItem[] {
 		const apexClassTreeItems = [];
 		for (const apexClass of this.apexClassMembers) {
