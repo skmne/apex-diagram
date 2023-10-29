@@ -97,8 +97,8 @@ export default class DiagramWorkspaceProvider {
 		return html;
 	}
 
-	private destroy() {
-		this.data = undefined;
+	private destroy(): void {
 		DiagramWorkspaceProvider.instance = null;
+		console.log("**** destroy ****");
 	}
 }
