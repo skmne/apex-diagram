@@ -21,6 +21,19 @@ export default class Vector {
 		return this;
 	}
 
+	get x() {
+		return this.#x;
+	}
+	get y() {
+		return this.#y;
+	}
+	set x(x) {
+		this.#x = x;
+	}
+	set y(y) {
+		this.#y = y;
+	}
+
 	getX() {
 		return this.#x;
 	}

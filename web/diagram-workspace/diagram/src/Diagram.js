@@ -18,12 +18,11 @@ class Diagram {
 		this.#width = svgElement.getAttribute("width");
 		this.#height = svgElement.getAttribute("height");
 		console.log(this.#width, this.#height);
-		this.#nodesBuilder = new NodesBuilder(this.#width); //todo rename... maybe will use builder pattern
+		this.#nodesBuilder = new NodesBuilder(this.#width);
 	}
 	addItems(newData) {
 		this.#nodesBuilder.addNodes(newData);
 		this.#linksBuilder.addLinks(newData);
-
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		// this.update();
 		// this.#generateSimulation(newData.nodes);
@@ -39,9 +38,6 @@ class Diagram {
 	setData(data) {
 		this.#data = data;
 		this.#nodesBuilder.setData(this.#data);
-	}
-	setNodeSize(nodeWidth, nodeHeigth) {
-		this.#nodesBuilder.setSize(nodeWidth, nodeHeigth);
 	}
 
 	setStyle(style) {

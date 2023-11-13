@@ -1,4 +1,5 @@
 import { drag } from "d3";
+import Node from "./Node.js";
 
 export default class NodesBuilder {
 	#data = { nodes: [], links: [] };
@@ -25,21 +26,21 @@ export default class NodesBuilder {
 
 	addNodes(newData) {
 		this.#data.links = [...this.#data.links, ...newData.links];
-		let newNodes = this.setInitPosition(newData.nodes);
-		this.#data.nodes = [...this.#data.nodes, ...newNodes];
+		let newNodes = newData.nodes.map((item) => new Node(item));
+		newData.nodes = this.setInitPosition(newNodes);
+		this.#data.nodes = [...this.#data.nodes, ...newData.nodes];
 		console.log(this.#data.nodes);
 		this.#createNodes(this.#data.nodes);
 		this.update();
 	}
 
-	setInitPosition(newNodes, existingNodes) {
+	setInitPosition(newNodes) {
 		let initX = 0;
 		let initY = 0;
 
 		newNodes.forEach((item) => {
-			var width = this.#nodeWidth;
-			var height = this.#nodeHeigth;
-
+			const width = item.width;
+			const height = item.height;
 			while (!this.isPositionClear(initX, initY, width, height)) {
 				initX += width + this.#padding;
 				if (initX + width > this.#svgWidth) {
@@ -47,9 +48,7 @@ export default class NodesBuilder {
 					initY += height + this.#padding;
 				}
 			}
-
-			item.x = initX;
-			item.y = initY;
+			item.setPosition(initX, initY);
 
 			// Update x for the next rectangle
 			initX += width + this.#padding;
@@ -67,13 +66,12 @@ export default class NodesBuilder {
 
 	// Function to check for collisions with rectangles
 	hasRectangleCollision(x, y, width, height) {
-		for (var i = 0; i < this.#data.nodes.length; i++) {
-			var existingRect = this.#data.nodes[i];
-			var x1 = existingRect.x;
-			var y1 = existingRect.y;
-			var width1 = this.#nodeWidth;
-			var height1 = this.#nodeHeigth;
-
+		for (let i = 0; i < this.#data.nodes.length; i++) {
+			const existingNode = this.#data.nodes[i];
+			const x1 = existingNode.position.x;
+			const y1 = existingNode.position.y;
+			const width1 = existingNode.width;
+			const height1 = existingNode.height;
 			if (
 				x1 < x + width + this.#padding &&
 				x1 + width1 + this.#padding > x &&
@@ -165,9 +163,9 @@ export default class NodesBuilder {
 	}
 
 	update() {
-		this.#rectangles.attr("x", (d) => d.x).attr("y", (d) => d.y);
-		this.#nodeGroups.attr("x", (d) => d.x).attr("y", (d) => d.y);
-		this.#textHeaders.attr("x", (d) => d.x).attr("y", (d) => d.y);
+		this.#rectangles.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
+		this.#nodeGroups.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
+		this.#textHeaders.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
 	}
 
 	setDragRectangle(_drag) {
@@ -183,13 +181,17 @@ export default class NodesBuilder {
 			.selectAll("g")
 			.data(nodes)
 			.join("g")
-			.attr("width", this.#nodeWidth)
-			.attr("height", this.#nodeHeigth)
+			.attr("width", (d) => {
+				return d.width;
+			})
+			.attr("height", (d) => {
+				return d.height;
+			})
 			.attr("x", function (d) {
-				return d.x;
+				return d.position.x;
 			})
 			.attr("y", function (d) {
-				return d.y;
+				return d.position.y;
 			})
 			.text(function (d) {
 				return d.name;
@@ -199,13 +201,17 @@ export default class NodesBuilder {
 	#createRectangles() {
 		return this.#nodeGroups
 			.append("rect")
-			.attr("width", this.#nodeWidth)
-			.attr("height", this.#nodeHeigth)
+			.attr("width", (d) => {
+				return d.width;
+			})
+			.attr("height", (d) => {
+				return d.height;
+			})
 			.attr("x", function (d) {
-				return d.x;
+				return d.position.x;
 			})
 			.attr("y", function (d) {
-				return d.y;
+				return d.position.y;
 			})
 			.attr("fill", this.#background)
 			.attr("fill-opacity", "0.5")
@@ -227,10 +233,10 @@ export default class NodesBuilder {
 				return d.name;
 			})
 			.attr("x", (d) => {
-				return d.x;
+				return d.position.x;
 			})
 			.attr("y", (d) => {
-				return d.y;
+				return d.position.y;
 			})
 			.attr("font-family", this.#fontFamily)
 			.attr("font-size", this.#fontSize)
@@ -238,10 +244,12 @@ export default class NodesBuilder {
 			.attr("text-anchor", "middle")
 			.attr("cursor", "text")
 			.attr("dx", (d) => {
-				return this.#nodeWidth / 2;
+				const width = d.width / 2;
+				return width;
 			})
 			.attr("dy", (d) => {
-				return this.#nodeHeigth / 2 + 5;
+				const heigth = d.height / 2;
+				return heigth;
 			});
 		return text;
 	}

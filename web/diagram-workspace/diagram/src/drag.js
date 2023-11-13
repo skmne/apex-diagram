@@ -6,8 +6,8 @@ export default function drag(d3, diagram) {
 	function dragged(event, d) {
 		d3.select(this.parentNode)
 			.raise()
-			.attr("x", (d.x = event.x))
-			.attr("y", (d.y = event.y));
+			.attr("x", (d.position.x = event.x))
+			.attr("y", (d.position.y = event.y));
 
 		diagram.update();
 	}

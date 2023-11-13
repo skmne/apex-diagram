@@ -25,8 +25,7 @@ function setSvgSize(svgElement, width, height) {
 }
 
 const diagram = new MyLibrary.default(svgElement);
-// diagram.setData(getData());
-diagram.setNodeSize(100, 50);
+
 diagram.setStyle({
 	foreground: "var(--vscode-editor-foreground)",
 	background: "var(--vscode-editor-background)",
@@ -62,11 +61,13 @@ document.getElementById("add").addEventListener("click", () => {
 				namespace: null,
 				name: "fflib_Constructor NEW",
 				id: "fflib_Constructor_NEW",
+				width: 300,
 			},
 			{
 				namespace: null,
 				name: "fflib_Selector NEW",
 				id: "fflib_Selector_New",
+				height: 100,
 			},
 		],
 		links: [
