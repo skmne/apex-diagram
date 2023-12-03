@@ -4,11 +4,13 @@ import LinksBuilder from "./LinksBuilder.js";
 import drag from "./drag.js";
 import initZoom from "./zoom.js";
 
+import state from "./GlobalState.js";
+import Link from "./Link.js";
+import Node from "./Node.js";
+
 class Diagram {
 	#nodesBuilder;
 	#linksBuilder;
-
-	#data = { nodes: [], links: [] };
 	#svg;
 
 	#width = 800;
@@ -17,12 +19,22 @@ class Diagram {
 		this.#svg = d3.select(svgElement);
 		this.#width = svgElement.getAttribute("width");
 		this.#height = svgElement.getAttribute("height");
+		state.width = this.#width;
+		state.height = this.#height;
 		console.log(this.#width, this.#height);
 		this.#nodesBuilder = new NodesBuilder(this.#width);
 	}
 	addItems(newData) {
+		for (const node of newData.nodes) {
+			state.nodes.push(new Node(node));
+		}
+		for (const link of newData.links) {
+			state.links.push(new Link(link));
+		}
+
 		this.#nodesBuilder.addNodes(newData);
 		this.#linksBuilder.addLinks(newData);
+
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		// this.update();
 		// this.#generateSimulation(newData.nodes);
@@ -36,8 +48,9 @@ class Diagram {
 	}
 
 	setData(data) {
-		this.#data = data;
-		this.#nodesBuilder.setData(this.#data);
+		// state.nodes = data.nodes.map((item) => new Node(item));
+		// state.links = data.links.map((item) => new Link(item));
+		// this.#nodesBuilder.setData(this.#data);
 	}
 
 	setStyle(style) {
@@ -47,13 +60,9 @@ class Diagram {
 		const rootGroupContainer = this.#createGroupContainer(this.#svg);
 		this.#nodesBuilder.build(rootGroupContainer);
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
-		this.#linksBuilder = new LinksBuilder(
-			this.#nodesBuilder.getNodeWidth(),
-			this.#nodesBuilder.getNodeHeigth(),
-			this.#data
-		);
+		this.#linksBuilder = new LinksBuilder();
 		this.#linksBuilder.build(rootGroupContainer);
-		this.#generateSimulation(this.#data.nodes);
+		this.#generateSimulation(state.nodes);
 
 		initZoom(d3, this.#width, this.#height);
 	}
@@ -61,17 +70,6 @@ class Diagram {
 	update() {
 		this.#linksBuilder.update();
 		this.#nodesBuilder.update();
-	}
-
-	attachNodeToLink() {
-		const attachedLinks = this.#data.links.map((link) => {
-			return {
-				source: this.#data.nodes.find((item) => item.id === link.source),
-				target: this.#data.nodes.find((item) => item.id === link.target),
-				type: link.type,
-			};
-		});
-		this.#data.links = attachedLinks;
 	}
 
 	#generateSimulation(nodes) {

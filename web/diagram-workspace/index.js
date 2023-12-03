@@ -62,12 +62,14 @@ document.getElementById("add").addEventListener("click", () => {
 				name: "fflib_Constructor NEW",
 				id: "fflib_Constructor_NEW",
 				width: 300,
+				height: 500,
 			},
 			{
 				namespace: null,
 				name: "fflib_Selector NEW",
 				id: "fflib_Selector_New",
 				height: 100,
+				width: 450,
 			},
 		],
 		links: [

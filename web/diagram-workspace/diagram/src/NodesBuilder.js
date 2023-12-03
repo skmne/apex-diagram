@@ -1,12 +1,10 @@
 import { drag } from "d3";
 import Node from "./Node.js";
+import state from "./GlobalState.js";
 
 export default class NodesBuilder {
-	#data = { nodes: [], links: [] };
 	#rootGroup;
 	#nodesContainer;
-	#nodeWidth = 160;
-	#nodeHeigth = 40;
 	#padding = 50;
 	#nodeGroups;
 	#rectangles;
@@ -25,12 +23,12 @@ export default class NodesBuilder {
 	}
 
 	addNodes(newData) {
-		this.#data.links = [...this.#data.links, ...newData.links];
-		let newNodes = newData.nodes.map((item) => new Node(item));
-		newData.nodes = this.setInitPosition(newNodes);
-		this.#data.nodes = [...this.#data.nodes, ...newData.nodes];
-		console.log(this.#data.nodes);
-		this.#createNodes(this.#data.nodes);
+		// state.links = [...state.links, ...newData.links];
+		// let newNodes = newData.nodes.map((item) => new Node(item));
+		// newData.nodes = this.setInitPosition(newNodes);
+		// state.nodes = [...state.nodes, ...newData.nodes];
+		console.log(state.nodes);
+		this.#createNodes(state.nodes);
 		this.update();
 	}
 
@@ -66,8 +64,8 @@ export default class NodesBuilder {
 
 	// Function to check for collisions with rectangles
 	hasRectangleCollision(x, y, width, height) {
-		for (let i = 0; i < this.#data.nodes.length; i++) {
-			const existingNode = this.#data.nodes[i];
+		for (let i = 0; i < state.nodes.length; i++) {
+			const existingNode = state.nodes[i];
 			const x1 = existingNode.position.x;
 			const y1 = existingNode.position.y;
 			const width1 = existingNode.width;
@@ -86,9 +84,9 @@ export default class NodesBuilder {
 
 	// Function to check for collisions with lines
 	hasLineCollision(x, y, width, height) {
-		console.log(this.#data.links);
-		for (var i = 0; i < this.#data.links.length; i++) {
-			var existingLine = this.#data.links[i];
+		console.log(state.links);
+		for (var i = 0; i < state.links.length; i++) {
+			var existingLine = state.links[i];
 			var lineX1 = existingLine.x1;
 			var lineY1 = existingLine.y1;
 			var lineX2 = existingLine.x2;
@@ -107,26 +105,16 @@ export default class NodesBuilder {
 	}
 
 	removeNodes(nodesIds) {
-		this.#data.nodes = this.#data.nodes.filter((node) => !nodesIds.includes(node.id));
-		this.#data.links = this.#data.nodes.filter(
+		state.nodes = state.nodes.filter((node) => !nodesIds.includes(node.id));
+		state.links = state.nodes.filter(
 			(link) => !nodesIds.includes(link.source) || !nodesIds.includes(link.target)
 		);
-		console.log(this.#data);
-		this.#createNodes(this.#data.nodes);
+		console.log(state);
+		this.#createNodes(state.nodes);
 	}
 
 	setData(data) {
-		this.#data = data;
-	}
-	setSize(nodeWidth, nodeHeigth) {
-		this.#nodeWidth = nodeWidth;
-		this.#nodeHeigth = nodeHeigth;
-	}
-	getNodeWidth() {
-		return this.#nodeWidth;
-	}
-	getNodeHeigth() {
-		return this.#nodeHeigth;
+		state = data;
 	}
 
 	setStyle(style) {
@@ -140,7 +128,7 @@ export default class NodesBuilder {
 	build(rootGroup) {
 		this.#rootGroup = rootGroup;
 		this.#nodesContainer = this.#createNodesContainer(this.#rootGroup);
-		this.#createNodes(this.#data.nodes);
+		this.#createNodes(state.nodes);
 	}
 
 	#createNodes(nodes) {

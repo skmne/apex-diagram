@@ -1,57 +1,53 @@
-import Vector from "./Vector.js";
-
+import Link from "./Link.js";
+import state from "./GlobalState.js";
 export default class LinksBuilder {
-	#data = { nodes: [], links: [] };
-	#nodeWidth;
-	#nodeHeigth;
 	#links = [];
 	#arrows;
 	#linkContainer;
 	#editorForeground = "var(--vscode-editor-foreground)";
-	#arrowSize = 10;
 
-	constructor(nodeWidth, nodeHeigth, data) {
-		this.#nodeWidth = nodeWidth;
-		this.#nodeHeigth = nodeHeigth;
-		this.#data = data;
-	}
+	constructor() {}
 	addLinks(newData) {
-		this.#data.nodes = [...this.#data.nodes, ...newData.nodes];
-		this.#data.links = [...this.#data.links, ...newData.links];
-		this.#links = this.#createLinks(this.#data.links);
+		// state.nodes = [...state.nodes, ...newData.nodes]; //todo create and move to base data state
+
+		// const newLinks = newData.links.map((item) => new Link(item, state));
+
+		// state.links = [...state.links, ...newLinks];
+		// console.log("links = ", state.links);
+		this.#links = this.#createLinks(state.links);
 		this.update();
 	}
 	removeLinks(nodesIds) {
-		this.#data.nodes = this.#data.nodes.filter((node) => !nodesIds.includes(node.id));
-		this.#data.links = this.#data.links.filter(
+		state.nodes = state.nodes.filter((node) => !nodesIds.includes(node.id));
+		state.links = state.links.filter(
 			(link) => !nodesIds.includes(link.source) && !nodesIds.includes(link.target)
 		);
-		this.#links = this.#createLinks(this.#data.links);
+		this.#links = this.#createLinks(state.links);
 		this.update();
 	}
 
 	build(rootGroupContainer) {
 		this.#linkContainer = this.#createLinksContainer(rootGroupContainer);
 		this.#arrows = this.#createArrows(rootGroupContainer);
-		this.#links = this.#createLinks(this.#data.links);
+		this.#links = this.#createLinks(state.links);
 	}
 
 	update() {
 		this.#links
 			.attr("x1", (d) => {
-				d.x1 = this.#getSourceVector(d).getX();
+				d.x1 = d.getSourceVector().getX();
 				return d.x1;
 			})
 			.attr("y1", (d) => {
-				d.y1 = this.#getSourceVector(d).getY();
+				d.y1 = d.getSourceVector().getY();
 				return d.y1;
 			})
 			.attr("x2", (d) => {
-				d.x2 = this.#getTargetVector(d).getX();
+				d.x2 = d.getTargetVector().getX();
 				return d.x2;
 			})
 			.attr("y2", (d) => {
-				d.y2 = this.#getTargetVector(d).getY();
+				d.y2 = d.getTargetVector().getY();
 				return d.y2;
 			});
 	}
@@ -66,19 +62,19 @@ export default class LinksBuilder {
 			.data(links)
 			.join("line")
 			.attr("x1", (d) => {
-				d.x1 = this.#sourceX(d) || 0;
+				d.x1 = d.getSourceVector().getX();
 				return d.x1;
 			})
 			.attr("y1", (d) => {
-				d.y1 = this.#sourceY(d) || 0;
+				d.y1 = d.getSourceVector().getY();
 				return d.y1;
 			})
 			.attr("x2", (d) => {
-				d.x2 = this.#targetX(d) || 0;
+				d.x2 = d.getTargetVector().getX();
 				return d.x2;
 			})
 			.attr("y2", (d) => {
-				d.y2 = this.#targetY(d) || 0;
+				d.y2 = d.getTargetVector().getY();
 				return d.y2;
 			})
 			.attr("marker-end", (d) => {
@@ -144,105 +140,5 @@ export default class LinksBuilder {
 			.attr("stroke", this.#editorForeground)
 			.attr("fill", "none");
 		return marker;
-	}
-
-	#sourceX(d) {
-		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).position.x;
-		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).position.y;
-		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).position.x;
-		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).position.y;
-		// debugger;
-		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
-			if (sourceX > targetX) {
-				return sourceX;
-			} else {
-				return sourceX + this.#nodeWidth;
-			}
-		} else if (Math.abs(sourceX - targetX) <= this.#nodeWidth + 20) {
-			return sourceX + this.#nodeWidth / 2;
-		} else if (sourceX > targetX) {
-			return sourceX;
-		} else {
-			return sourceX + this.#nodeWidth;
-		}
-	}
-
-	#targetX(d) {
-		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).position.x;
-		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).position.y;
-		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).position.x;
-		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).position.y;
-
-		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
-			if (sourceX < targetX) {
-				return targetX;
-			} else {
-				return targetX + this.#nodeWidth;
-			}
-		} else if (Math.abs(sourceX - targetX) <= this.#nodeWidth + 20) {
-			return targetX + this.#nodeWidth / 2;
-		} else if (sourceX < targetX) {
-			return targetX;
-		} else if (sourceX > targetX) {
-			return targetX + this.#nodeWidth;
-		} else {
-			return targetX + this.#nodeWidth / 2;
-		}
-	}
-
-	#sourceY(d) {
-		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).position.x;
-		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).position.y;
-		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).position.x;
-		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).position.y;
-
-		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
-			return sourceY + this.#nodeHeigth / 2;
-		} else if (sourceY > targetY) {
-			return sourceY;
-		} else {
-			return sourceY + this.#nodeHeigth;
-		}
-	}
-
-	#targetY(d) {
-		const sourceX = d.source.x !== undefined ? d.source.x : this.#getNodeByKey(d.source).position.x;
-		const sourceY = d.source.y !== undefined ? d.source.y : this.#getNodeByKey(d.source).position.y;
-		const targetX = d.target.x !== undefined ? d.target.x : this.#getNodeByKey(d.target).position.x;
-		const targetY = d.target.y !== undefined ? d.target.y : this.#getNodeByKey(d.target).position.y;
-
-		if (Math.abs(sourceY - targetY) <= this.#nodeHeigth) {
-			return targetY + this.#nodeHeigth / 2;
-		} else if (sourceY > targetY) {
-			return targetY + this.#nodeHeigth;
-		} else if (sourceY < targetY) {
-			return targetY;
-		}
-	}
-
-	#getNodeByKey(nodeKey) {
-		const currentNode = this.#data.nodes.find((item) => item.id === nodeKey);
-		return currentNode;
-	}
-
-	#getSourceVector(d) {
-		return new Vector(this.#sourceX(d), this.#sourceY(d));
-	}
-
-	#getTargetVector(d) {
-		const sourceVector = this.#getSourceVector(d);
-		const currentVector = new Vector(
-			this.#targetX(d) - sourceVector.getX(),
-			this.#targetY(d) - sourceVector.getY()
-		);
-		const normalizedVector = currentVector.normalized();
-		normalizedVector.multipleVectorByScalar(currentVector.getLength() - this.#arrowSize);
-
-		const targetVector = new Vector(
-			sourceVector.getX() + normalizedVector.getX(),
-			sourceVector.getY() + normalizedVector.getY()
-		);
-
-		return targetVector;
 	}
 }

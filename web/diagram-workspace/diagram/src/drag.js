@@ -4,10 +4,16 @@ export default function drag(d3, diagram) {
 	}
 
 	function dragged(event, d) {
+		const mouseX = event.x;
+		const mouseY = event.y;
+
+		// const offsetX = mouseX - d.position.x;
+		// const offsetY = mouseY - d.position.y;
+
 		d3.select(this.parentNode)
 			.raise()
-			.attr("x", (d.position.x = event.x))
-			.attr("y", (d.position.y = event.y));
+			.attr("x", (d.position.x = mouseX))
+			.attr("y", (d.position.y = mouseY));
 
 		diagram.update();
 	}
