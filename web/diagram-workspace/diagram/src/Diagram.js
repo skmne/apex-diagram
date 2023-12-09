@@ -69,14 +69,15 @@ class Diagram {
 		this.#linksBuilder = new LinksBuilder();
 		this.#linksBuilder.build(rootGroupContainer);
 
-		this.#generateSimulation(state.nodes);
+		// this.#generateSimulation(state.nodes);
 
 		initZoom(d3, this.#width, this.#height);
 	}
 
 	update() {
-		this.#linksBuilder.update();
+		console.log("update");
 		this.#nodesBuilder.update();
+		this.#linksBuilder.update();
 	}
 
 	#generateSimulation(nodes) {

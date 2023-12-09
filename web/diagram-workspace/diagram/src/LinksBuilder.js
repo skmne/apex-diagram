@@ -7,24 +7,16 @@ export default class LinksBuilder {
 
 	constructor() {}
 
-	removeLinks(nodesIds) {
-		state.nodes = state.nodes.filter((node) => !nodesIds.includes(node.id));
-		state.links = state.links.filter(
-			(link) => !nodesIds.includes(link.source) && !nodesIds.includes(link.target)
-		);
-		this.#links = this.createLinks(state.links);
-		this.update();
-	}
-
 	build(rootGroupContainer) {
 		this.#linkContainer = this.#createLinksContainer(rootGroupContainer);
 		this.#arrows = this.#createArrows(rootGroupContainer);
-		this.#links = this.createLinks(state.links);
+		this.createLinks(state.links);
 	}
 
 	update() {
 		this.#links
 			.attr("x1", (d) => {
+				console.log(d);
 				d.x1 = d.getSourceVector().getX();
 				return d.x1;
 			})
@@ -47,7 +39,7 @@ export default class LinksBuilder {
 	}
 
 	createLinks() {
-		let elementLinks = this.#linkContainer
+		this.#links = this.#linkContainer
 			.selectAll("line")
 			.data(state.links)
 			.join("line")
@@ -89,7 +81,7 @@ export default class LinksBuilder {
 			.attr("stroke-width", 1)
 			.attr("stroke", state.style.nodeForeground);
 
-		return elementLinks;
+		return this.#links;
 	}
 
 	#createArrows(groupContainer) {
