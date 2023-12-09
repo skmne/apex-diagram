@@ -22,16 +22,6 @@ export default class NodesBuilder {
 		this.#svgWidth = svgWidth;
 	}
 
-	addNodes(newData) {
-		// state.links = [...state.links, ...newData.links];
-		// let newNodes = newData.nodes.map((item) => new Node(item));
-		// newData.nodes = this.setInitPosition(newNodes);
-		// state.nodes = [...state.nodes, ...newData.nodes];
-		console.log(state.nodes);
-		this.#createNodes(state.nodes);
-		this.update();
-	}
-
 	setInitPosition(newNodes) {
 		let initX = 0;
 		let initY = 0;
@@ -66,8 +56,8 @@ export default class NodesBuilder {
 	hasRectangleCollision(x, y, width, height) {
 		for (let i = 0; i < state.nodes.length; i++) {
 			const existingNode = state.nodes[i];
-			const x1 = existingNode.position.x;
-			const y1 = existingNode.position.y;
+			const x1 = existingNode.x;
+			const y1 = existingNode.y;
 			const width1 = existingNode.width;
 			const height1 = existingNode.height;
 			if (
@@ -104,15 +94,6 @@ export default class NodesBuilder {
 		return false;
 	}
 
-	removeNodes(nodesIds) {
-		state.nodes = state.nodes.filter((node) => !nodesIds.includes(node.id));
-		state.links = state.nodes.filter(
-			(link) => !nodesIds.includes(link.source) || !nodesIds.includes(link.target)
-		);
-		console.log(state);
-		this.#createNodes(state.nodes);
-	}
-
 	setData(data) {
 		state = data;
 	}
@@ -128,11 +109,11 @@ export default class NodesBuilder {
 	build(rootGroup) {
 		this.#rootGroup = rootGroup;
 		this.#nodesContainer = this.#createNodesContainer(this.#rootGroup);
-		this.#createNodes(state.nodes);
+		this.createNodes();
 	}
 
-	#createNodes(nodes) {
-		this.#nodeGroups = this.#createGroupNodes(nodes);
+	createNodes() {
+		this.#nodeGroups = this.#createGroupNodes(state.nodes);
 		this.#rectangles = this.#createRectangles();
 		this.#textHeaders = this.#createTexts();
 		this.#createTitles();
@@ -151,9 +132,9 @@ export default class NodesBuilder {
 	}
 
 	update() {
-		this.#rectangles.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
-		this.#nodeGroups.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
-		this.#textHeaders.attr("x", (d) => d.position.x).attr("y", (d) => d.position.y);
+		this.#rectangles.attr("x", (d) => d.x).attr("y", (d) => d.y);
+		this.#nodeGroups.attr("x", (d) => d.x).attr("y", (d) => d.y);
+		this.#textHeaders.attr("x", (d) => d.x).attr("y", (d) => d.y);
 	}
 
 	setDragRectangle(_drag) {
@@ -176,10 +157,10 @@ export default class NodesBuilder {
 				return d.height;
 			})
 			.attr("x", function (d) {
-				return d.position.x;
+				return d.x;
 			})
 			.attr("y", function (d) {
-				return d.position.y;
+				return d.y;
 			})
 			.text(function (d) {
 				return d.name;
@@ -196,10 +177,10 @@ export default class NodesBuilder {
 				return d.height;
 			})
 			.attr("x", function (d) {
-				return d.position.x;
+				return d.x;
 			})
 			.attr("y", function (d) {
-				return d.position.y;
+				return d.y;
 			})
 			.attr("fill", this.#background)
 			.attr("fill-opacity", "0.5")
@@ -221,10 +202,10 @@ export default class NodesBuilder {
 				return d.name;
 			})
 			.attr("x", (d) => {
-				return d.position.x;
+				return d.x;
 			})
 			.attr("y", (d) => {
-				return d.position.y;
+				return d.y;
 			})
 			.attr("font-family", this.#fontFamily)
 			.attr("font-size", this.#fontSize)

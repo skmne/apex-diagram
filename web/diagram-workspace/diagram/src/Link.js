@@ -37,10 +37,10 @@ export default class Link {
 	}
 
 	#sourceX() {
-		const sourceX = this.#sourceNode.position.x;
-		const sourceY = this.#sourceNode.position.y;
-		const targetX = this.#targetNode.position.x;
-		const targetY = this.#targetNode.position.y;
+		const sourceX = this.#sourceNode.x;
+		const sourceY = this.#sourceNode.y;
+		const targetX = this.#targetNode.x;
+		const targetY = this.#targetNode.y;
 
 		if (Math.abs(sourceY - targetY) <= this.#sourceNode.height) {
 			if (sourceX > targetX) {
@@ -58,10 +58,10 @@ export default class Link {
 	}
 
 	#targetX() {
-		const sourceX = this.#sourceNode.position.x;
-		const sourceY = this.#sourceNode.position.y;
-		const targetX = this.#targetNode.position.x;
-		const targetY = this.#targetNode.position.y;
+		const sourceX = this.#sourceNode.x;
+		const sourceY = this.#sourceNode.y;
+		const targetX = this.#targetNode.x;
+		const targetY = this.#targetNode.y;
 
 		if (Math.abs(sourceY - targetY) <= this.#targetNode.height) {
 			if (sourceX < targetX) {
@@ -81,8 +81,8 @@ export default class Link {
 	}
 
 	#sourceY() {
-		const sourceY = this.#sourceNode.position.y;
-		const targetY = this.#targetNode.position.y;
+		const sourceY = this.#sourceNode.y;
+		const targetY = this.#targetNode.y;
 
 		if (Math.abs(sourceY - targetY) <= Math.abs(this.#sourceNode.height - this.#targetNode.height)) {
 			return sourceY + this.#sourceNode.height / 2;
@@ -94,8 +94,8 @@ export default class Link {
 	}
 
 	#targetY() {
-		const sourceY = this.#sourceNode.position.y;
-		const targetY = this.#targetNode.position.y;
+		const sourceY = this.#sourceNode.y;
+		const targetY = this.#targetNode.y;
 
 		if (Math.abs(sourceY - targetY) <= this.#targetNode.height) {
 			return targetY + this.#targetNode.height / 2;

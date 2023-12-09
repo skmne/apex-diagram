@@ -3,9 +3,10 @@ import state from "./GlobalState.js";
 export default class Node {
 	#id;
 	#name;
-	#position = new Vector(0, 0);
 	#width = 160; //default value todo move to the diagram set
 	#height = 40;
+	x;
+	y;
 
 	constructor(nodeObj) {
 		this.#id = nodeObj.id;
@@ -24,11 +25,8 @@ export default class Node {
 	}
 
 	setPosition(x, y) {
-		this.#position = new Vector(x, y);
-	}
-
-	get position() {
-		return this.#position;
+		this.x = x;
+		this.y = y;
 	}
 
 	get width() {
@@ -70,8 +68,8 @@ export default class Node {
 	hasRectangleCollision(x, y, width, height) {
 		for (let i = 0; i < state.nodes.length; i++) {
 			const existingNode = state.nodes[i];
-			const x1 = existingNode.position.x;
-			const y1 = existingNode.position.y;
+			const x1 = existingNode.x;
+			const y1 = existingNode.y;
 			const width1 = existingNode.width;
 			const height1 = existingNode.height;
 			if (

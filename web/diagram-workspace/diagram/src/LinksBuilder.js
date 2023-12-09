@@ -7,29 +7,20 @@ export default class LinksBuilder {
 	#editorForeground = "var(--vscode-editor-foreground)";
 
 	constructor() {}
-	addLinks(newData) {
-		// state.nodes = [...state.nodes, ...newData.nodes]; //todo create and move to base data state
 
-		// const newLinks = newData.links.map((item) => new Link(item, state));
-
-		// state.links = [...state.links, ...newLinks];
-		// console.log("links = ", state.links);
-		this.#links = this.#createLinks(state.links);
-		this.update();
-	}
 	removeLinks(nodesIds) {
 		state.nodes = state.nodes.filter((node) => !nodesIds.includes(node.id));
 		state.links = state.links.filter(
 			(link) => !nodesIds.includes(link.source) && !nodesIds.includes(link.target)
 		);
-		this.#links = this.#createLinks(state.links);
+		this.#links = this.createLinks(state.links);
 		this.update();
 	}
 
 	build(rootGroupContainer) {
 		this.#linkContainer = this.#createLinksContainer(rootGroupContainer);
 		this.#arrows = this.#createArrows(rootGroupContainer);
-		this.#links = this.#createLinks(state.links);
+		this.#links = this.createLinks(state.links);
 	}
 
 	update() {
@@ -56,10 +47,10 @@ export default class LinksBuilder {
 		return groupContainer.append("g").attr("class", "links");
 	}
 
-	#createLinks(links) {
+	createLinks() {
 		let elementLinks = this.#linkContainer
 			.selectAll("line")
-			.data(links)
+			.data(state.links)
 			.join("line")
 			.attr("x1", (d) => {
 				d.x1 = d.getSourceVector().getX();

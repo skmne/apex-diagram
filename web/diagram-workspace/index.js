@@ -33,6 +33,7 @@ diagram.setStyle({
 	fontSize: "12px",
 	fontColor: "var(--vscode-editor-foreground)",
 });
+diagram.setData(getData());
 
 diagram.build();
 

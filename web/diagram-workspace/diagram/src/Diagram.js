@@ -12,9 +12,9 @@ class Diagram {
 	#nodesBuilder;
 	#linksBuilder;
 	#svg;
+	#width; //default value
+	#height;
 
-	#width = 800;
-	#height = 600;
 	constructor(svgElement) {
 		this.#svg = d3.select(svgElement);
 		this.#width = svgElement.getAttribute("width");
@@ -25,32 +25,31 @@ class Diagram {
 		this.#nodesBuilder = new NodesBuilder(this.#width);
 	}
 	addItems(newData) {
-		for (const node of newData.nodes) {
-			state.nodes.push(new Node(node));
-		}
-		for (const link of newData.links) {
-			state.links.push(new Link(link));
-		}
-
-		this.#nodesBuilder.addNodes(newData);
-		this.#linksBuilder.addLinks(newData);
-
-		this.#nodesBuilder.setDragRectangle(drag(d3, this));
-		// this.update();
-		// this.#generateSimulation(newData.nodes);
+		this.setData(newData);
+		this.recreateDiagram();
 	}
 
 	removeItems(itemIds) {
-		this.#nodesBuilder.removeNodes(itemIds);
-		this.#linksBuilder.removeLinks(itemIds);
+		state.nodes = state.nodes.filter((node) => !itemIds.includes(node.id));
+		state.links = state.links.filter(
+			(link) => !itemIds.includes(link.source) || !itemIds.includes(link.target)
+		);
+		this.recreateDiagram();
+	}
 
+	recreateDiagram() {
+		this.#nodesBuilder.createNodes();
+		this.#linksBuilder.createLinks();
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 	}
 
 	setData(data) {
-		// state.nodes = data.nodes.map((item) => new Node(item));
-		// state.links = data.links.map((item) => new Link(item));
-		// this.#nodesBuilder.setData(this.#data);
+		for (const node of data.nodes) {
+			state.nodes.push(new Node(node));
+		}
+		for (const link of data.links) {
+			state.links.push(new Link(link));
+		}
 	}
 
 	setStyle(style) {
@@ -62,6 +61,7 @@ class Diagram {
 		this.#nodesBuilder.setDragRectangle(drag(d3, this));
 		this.#linksBuilder = new LinksBuilder();
 		this.#linksBuilder.build(rootGroupContainer);
+
 		this.#generateSimulation(state.nodes);
 
 		initZoom(d3, this.#width, this.#height);
@@ -73,6 +73,8 @@ class Diagram {
 	}
 
 	#generateSimulation(nodes) {
+		console.log("nodes = ", nodes);
+
 		return d3
 			.forceSimulation()
 			.nodes(nodes)
@@ -82,7 +84,7 @@ class Diagram {
 					return d.index;
 				})
 			)
-			.force("charge", d3.forceManyBody().strength(10))
+			.force("charge", d3.forceManyBody().strength(-200))
 			.force("center", d3.forceCenter(this.#width / 2, this.#height / 2))
 			.force(
 				"x",
@@ -99,7 +101,7 @@ class Diagram {
 			.force(
 				"collision",
 				d3.forceCollide().radius((d) => {
-					return this.#getRectangleRadius();
+					return this.#getRectangleRadius() / 2;
 				})
 			)
 			.on("end", () => {
@@ -114,12 +116,7 @@ class Diagram {
 	}
 
 	#getRectangleRadius() {
-		return (
-			Math.sqrt(
-				Math.pow(this.#nodesBuilder.getNodeWidth() / 2, 2) +
-					Math.pow(this.#nodesBuilder.getNodeHeigth() / 2, 2)
-			) + 10
-		);
+		return Math.sqrt(Math.pow(160, 2) + Math.pow(140, 2));
 	}
 }
 function ticked(diagram) {
