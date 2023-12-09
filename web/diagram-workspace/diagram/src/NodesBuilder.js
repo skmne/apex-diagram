@@ -10,13 +10,6 @@ export default class NodesBuilder {
 	#rectangles;
 	#textHeaders;
 
-	#foreground = "var(--vscode-editor-foreground)";
-	#background = "var(--vscode-editor-background)";
-
-	#fontFamily = "var(--vscode-font-family)";
-	#fontSize = "12px";
-	#fontColor = "var(--vscode-editor-foreground)";
-
 	#svgWidth;
 	constructor(svgWidth) {
 		this.#svgWidth = svgWidth;
@@ -98,14 +91,6 @@ export default class NodesBuilder {
 		state = data;
 	}
 
-	setStyle(style) {
-		this.#foreground = style.foreground;
-		this.#background = style.background;
-		this.#fontFamily = style.fontFamily;
-		this.#fontSize = style.fontSize;
-		this.#fontColor = style.fontColor;
-	}
-
 	build(rootGroup) {
 		this.#rootGroup = rootGroup;
 		this.#nodesContainer = this.#createNodesContainer(this.#rootGroup);
@@ -182,10 +167,10 @@ export default class NodesBuilder {
 			.attr("y", function (d) {
 				return d.y;
 			})
-			.attr("fill", this.#background)
+			.attr("fill", state.style.nodeBackground)
 			.attr("fill-opacity", "0.5")
 			.attr("cursor", "move")
-			.attr("stroke", this.#foreground)
+			.attr("stroke", state.style.nodeForeground)
 			.attr("stroke-width", 1);
 	}
 
@@ -207,9 +192,9 @@ export default class NodesBuilder {
 			.attr("y", (d) => {
 				return d.y;
 			})
-			.attr("font-family", this.#fontFamily)
-			.attr("font-size", this.#fontSize)
-			.attr("fill", this.#fontColor)
+			.attr("font-family", state.style.fontFamily)
+			.attr("font-size", state.style.fontSize)
+			.attr("fill", state.style.fontColor)
 			.attr("text-anchor", "middle")
 			.attr("cursor", "text")
 			.attr("dx", (d) => {

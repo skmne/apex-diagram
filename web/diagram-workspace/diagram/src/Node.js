@@ -3,16 +3,16 @@ import state from "./GlobalState.js";
 export default class Node {
 	#id;
 	#name;
-	#width = 160; //default value todo move to the diagram set
-	#height = 40;
+	#width; //default value todo move to the diagram set
+	#height;
 	x;
 	y;
 
 	constructor(nodeObj) {
 		this.#id = nodeObj.id;
 		this.#name = nodeObj.name;
-		this.#width = nodeObj.width ? nodeObj.width : 160;
-		this.#height = nodeObj.height ? nodeObj.height : 40;
+		this.#width = nodeObj.width ? nodeObj.width : state.style.nodeWidth;
+		this.#height = nodeObj.height ? nodeObj.height : state.style.nodeHeight;
 		this.setInitPosition();
 	}
 

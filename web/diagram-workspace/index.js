@@ -27,11 +27,12 @@ function setSvgSize(svgElement, width, height) {
 const diagram = new MyLibrary.default(svgElement);
 
 diagram.setStyle({
-	foreground: "var(--vscode-editor-foreground)",
-	background: "var(--vscode-editor-background)",
+	nodeForeground: "var(--vscode-editor-foreground)",
+	nodeBackground: "var(--vscode-editor-background)",
 	fontFamily: "var(--vscode-font-family)",
 	fontSize: "12px",
 	fontColor: "var(--vscode-editor-foreground)",
+	nodeWidth: 200,
 });
 diagram.setData(getData());
 

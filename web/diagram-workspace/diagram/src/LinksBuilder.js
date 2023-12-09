@@ -4,7 +4,6 @@ export default class LinksBuilder {
 	#links = [];
 	#arrows;
 	#linkContainer;
-	#editorForeground = "var(--vscode-editor-foreground)";
 
 	constructor() {}
 
@@ -88,7 +87,7 @@ export default class LinksBuilder {
 				}
 			})
 			.attr("stroke-width", 1)
-			.attr("stroke", this.#editorForeground);
+			.attr("stroke", state.style.nodeForeground);
 
 		return elementLinks;
 	}
@@ -109,7 +108,7 @@ export default class LinksBuilder {
 			.attr("markerHeight", "10")
 			.attr("orient", "auto");
 
-		marker.append("path").attr("d", "M 0 0 L 10 5 L 0 10 z").attr("fill", this.#editorForeground);
+		marker.append("path").attr("d", "M 0 0 L 10 5 L 0 10 z").attr("fill", state.style.nodeForeground);
 		return marker;
 	}
 
@@ -128,7 +127,7 @@ export default class LinksBuilder {
 		marker.append("path")
 			.attr("d", "M 0 0 L 10 5 L 0 10 z")
 			.attr("stroke-width", "1")
-			.attr("stroke", this.#editorForeground)
+			.attr("stroke", state.style.nodeForeground)
 			.attr("fill", "none");
 		return marker;
 	}

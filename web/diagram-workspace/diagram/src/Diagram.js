@@ -53,8 +53,15 @@ class Diagram {
 	}
 
 	setStyle(style) {
-		this.#nodesBuilder.setStyle(style);
+		state.style.nodeForeground = style.nodeForeground ? style.nodeForeground : state.style.nodeForeground;
+		state.style.nodeBackground = style.nodeBackground ? style.nodeBackground : state.style.nodeBackground;
+		state.style.fontFamily = style.fontFamily ? style.fontFamily : state.style.fontFamily;
+		state.style.fontSize = style.fontSize ? style.fontSize : state.style.fontSize;
+		state.style.fontColor = style.fontColor ? style.fontColor : state.style.fontColor;
+		state.style.nodeWidth = style.nodeWidth ? style.nodeWidth : state.style.nodeWidth;
+		state.style.nodeHeight = style.nodeHeight ? style.nodeHeight : state.style.nodeHeight;
 	}
+
 	build() {
 		const rootGroupContainer = this.#createGroupContainer(this.#svg);
 		this.#nodesBuilder.build(rootGroupContainer);
@@ -73,16 +80,17 @@ class Diagram {
 	}
 
 	#generateSimulation(nodes) {
-		console.log("nodes = ", nodes);
-
 		return d3
 			.forceSimulation()
 			.nodes(nodes)
 			.force(
 				"link",
-				d3.forceLink().id(function (d) {
-					return d.index;
-				})
+				d3
+					.forceLink()
+					.id(function (d) {
+						return d.id;
+					})
+					.distance(10)
 			)
 			.force("charge", d3.forceManyBody().strength(-200))
 			.force("center", d3.forceCenter(this.#width / 2, this.#height / 2))
@@ -116,7 +124,7 @@ class Diagram {
 	}
 
 	#getRectangleRadius() {
-		return Math.sqrt(Math.pow(160, 2) + Math.pow(140, 2));
+		return Math.sqrt(Math.pow(state.style.nodeWidth, 2) + Math.pow(state.style.nodeHeight, 2));
 	}
 }
 function ticked(diagram) {
