@@ -12,7 +12,7 @@
 			--vscode-editor-foreground: #0f0f0f;
 			--vscode-editor-background: #bfcace;
 			--vscode-button-foreground: #f7f8f8;
-			--vscode-button-background: #2eb3db;
+			--vscode-button-background: #2eb3dba6;
 			--vscode-font-family: "Arial, Helvetica, sans-serif";
 			--vscode-font-size: 15sp;
 			--vscode-button-hoverBackground: #0a6786;
@@ -44,7 +44,7 @@
 			min-height: 100%;
 			margin: 0;
 		}
-		svg {
+		#uml-diagram {
 			background: linear-gradient(-90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
 				linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
 				linear-gradient(-90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
@@ -66,14 +66,42 @@
 		header {
 			padding: 0.67rem;
 		}
+		.group-button {
+			position: fixed;
+			top: 15px;
+			right: 15px;
+		}
+		.group-button button {
+			width: 2rem;
+			height: 2rem;
+			display: block;
+
+			border-width: 1px;
+			background-color: var(--vscode-button-background);
+			fill: var(--vscode-button-foreground);
+		}
+		.group-button button:hover {
+			background: var(--vscode-button-hoverBackground);
+			cursor: pointer !important;
+		}
+		.group-button button:first-child {
+			border-top-left-radius: 15%;
+			border-top-right-radius: 15%;
+			border-bottom-width: 0;
+		}
+		.group-button button:last-child {
+			border-bottom-left-radius: 15%;
+			border-bottom-right-radius: 15%;
+			border-top-width: 0;
+		}
 	</style>
 
 	<body>
 		<header id="header">
 			<div>
-				<a id="zoomIn">Zoom in</a>
+				<!-- <a id="zoomIn">Zoom in</a>
 				<a id="zoomOut">Zoom out</a>
-				<a id="resetZoom">Reset zoom</a>
+				<a id="resetZoom">Reset zoom</a> -->
 				<a id="panLeft">Pan left</a>
 				<a id="panRight">Pan right</a>
 				<a id="center">Center</a>
@@ -82,7 +110,68 @@
 				<a id="remove">Remove</a>
 			</div>
 		</header>
-
+		<div class="group-button">
+			<button id="zoomIn">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					x="0px"
+					y="0px"
+					viewBox="0 0 52 52"
+					enable-background="new 0 0 52 52"
+					xml:space="preserve"
+				>
+					<g>
+						<path
+							d="M31,19h-6v-6c0-0.6-0.4-1-1-1h-4c-0.6,0-1,0.4-1,1v6h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6v6
+						c0,0.6,0.4,1,1,1h4c0.6,0,1-0.4,1-1v-6h6c0.6,0,1-0.4,1-1v-4C32,19.4,31.6,19,31,19z"
+						/>
+					</g>
+					<path
+						d="M49.6,45.2L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
+					l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.2z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
+					S29.7,36,22,36z"
+					/>
+				</svg>
+			</button>
+			<button id="resetZoom">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					x="0px"
+					y="0px"
+					viewBox="0 0 52 52"
+					enable-background="new 0 0 52 52"
+					xml:space="preserve"
+				>
+					<g>
+						<path
+							d="M29.6 23.9H45c1 0 1.3-1.1.5-1.9l-4.9-5 9-9.1c.5-.5.5-1.4 0-1.9l-3.7-3.7c-.5-.4-1.3-.4-1.9.1l-9 9-5.1-4.9C29.1 5.7 28 6 28 7v15.4c0 .7.9 1.5 1.6 1.5zM22.4 28H7c-1 0-1.3 1.1-.5 1.9l4.9 5-9 9.1c-.5.5-.5 1.4 0 1.9l3.7 3.7c.5.5 1.3.5 1.9 0l9.1-9.1 5.1 4.9c.7.9 1.8.6 1.8-.4V29.7c0-.7-.9-1.7-1.6-1.7z"
+						></path>
+					</g>
+				</svg>
+			</button>
+			<button id="zoomOut">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					x="0px"
+					y="0px"
+					viewBox="0 0 52 52"
+					enable-background="new 0 0 52 52"
+					xml:space="preserve"
+				>
+					<g>
+						<path d="M19,25h12c0.6,0,1-0.4,1-1v-4c0-0.6-0.4-1-1-1H19" />
+					</g>
+					<g>
+						<path d="M19,19h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6" />
+					</g>
+					<path
+						d="M49.6,45.3L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
+				l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.3z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
+				S29.7,36,22,36z"
+					/>
+				</svg>
+			</button>
+		</div>
 		<div id="container" style="width: 100%; min-height: 100%">
 			<svg id="uml-diagram"></svg>
 		</div>

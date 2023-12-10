@@ -2,7 +2,7 @@ var header = document.getElementById("header").getBoundingClientRect();
 var svgContainer = document.getElementById("container").getBoundingClientRect();
 var width = svgContainer.width;
 var height = svgContainer.height - header.height;
-const svgElement = document.querySelector("svg");
+const svgElement = document.querySelector("#uml-diagram");
 
 setSvgSize(svgElement, width, height);
 window.addEventListener(
@@ -34,7 +34,7 @@ diagram.setStyle({
 	fontColor: "var(--vscode-editor-foreground)",
 	nodeWidth: 200,
 });
-diagram.setData(getData());
+// diagram.setData(getData());
 
 diagram.build();
 
@@ -88,6 +88,42 @@ document.getElementById("add").addEventListener("click", () => {
 document.getElementById("remove").addEventListener("click", () => {
 	console.log("remove");
 	diagram.removeItems(["fflib_Selector_New", "fflib_Constructor_NEW"]);
+});
+
+document.getElementById("zoomIn").addEventListener("click", (e) => {
+	console.log("zoomIn");
+	diagram.getZoom().zoomIn();
+});
+
+document.getElementById("zoomOut").addEventListener("click", () => {
+	console.log("zoomOut");
+	diagram.getZoom().zoomOut();
+});
+
+document.getElementById("resetZoom").addEventListener("click", () => {
+	console.log("resetZoom");
+	diagram.getZoom().resetZoom();
+});
+
+document.getElementById("panLeft").addEventListener("click", () => {
+	console.log("panLeft");
+
+	diagram.getZoom().panLeft();
+});
+
+document.getElementById("panRight").addEventListener("click", () => {
+	console.log("panRight");
+
+	diagram.getZoom().panRight();
+});
+
+document.getElementById("center").addEventListener("click", () => {
+	console.log("center");
+	diagram.getZoom().center();
+});
+
+document.getElementById("export").addEventListener("click", () => {
+	console.log("export");
 });
 
 function getData() {

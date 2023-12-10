@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import NodesBuilder from "./NodesBuilder.js";
 import LinksBuilder from "./LinksBuilder.js";
 import drag from "./drag.js";
-import initZoom from "./zoom.js";
+import Zoom from "./zoom.js";
 
 import state from "./GlobalState.js";
 import Link from "./Link.js";
@@ -14,6 +14,7 @@ class Diagram {
 	#svg;
 	#width; //default value
 	#height;
+	#zoom;
 
 	constructor(svgElement) {
 		this.#svg = d3.select(svgElement);
@@ -23,6 +24,8 @@ class Diagram {
 		state.height = this.#height;
 		console.log(this.#width, this.#height);
 		this.#nodesBuilder = new NodesBuilder(this.#width);
+		this.#zoom = new Zoom(d3, this.#svg, this.#width, this.#height);
+		// initZoom(d3, this.#width, this.#height);
 	}
 	addItems(newData) {
 		this.setData(newData);
@@ -70,14 +73,16 @@ class Diagram {
 		this.#linksBuilder.build(rootGroupContainer);
 
 		// this.#generateSimulation(state.nodes);
-
-		initZoom(d3, this.#width, this.#height);
 	}
 
 	update() {
 		console.log("update");
 		this.#nodesBuilder.update();
 		this.#linksBuilder.update();
+	}
+
+	getZoom() {
+		return this.#zoom;
 	}
 
 	#generateSimulation(nodes) {

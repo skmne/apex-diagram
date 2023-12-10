@@ -1,48 +1,49 @@
-export default function initZoom(d3, width, height) {
-	let zoom = d3
-		.zoom()
-		.scaleExtent([0.25, 10])
-		.on("zoom", handleZoom)
-		.on("start", function () {
-			document.getElementsByTagName("svg")[0].style.cursor = "grab"; //todo move to css class
-		})
-		.on("end", function () {
-			document.getElementsByTagName("svg")[0].style.cursor = "pointer";
-		});
-
-	d3.select("svg").call(zoom); //todo move to another place
-	// document.getElementById("zoomIn").addEventListener("click", zoomIn);
-	// document.getElementById("zoomOut").addEventListener("click", zoomOut);
-	// document.getElementById("resetZoom").addEventListener("click", resetZoom);
-	// document.getElementById("center").addEventListener("click", center);
-	// document.getElementById("panLeft").addEventListener("click", panLeft);
-	// document.getElementById("panRight").addEventListener("click", panRight);
-
-	function handleZoom(e) {
-		d3.select("svg g").attr("transform", e.transform);
-	}
-	function zoomIn() {
-		d3.select("svg").transition().call(zoom.scaleBy, 2);
-	}
-	function zoomOut() {
-		d3.select("svg").transition().call(zoom.scaleBy, 0.5);
+export default class Zoom {
+	// #d3;
+	#width;
+	#height;
+	#zoom;
+	#svg;
+	constructor(d3, svg, width, height) {
+		// this.#d3 = d3;
+		this.#svg = svg;
+		this.#width = width;
+		this.#height = height;
+		this.#zoom = d3
+			.zoom()
+			.scaleExtent([0.25, 10])
+			.on("zoom", (e) => {
+				this.#svg.select("g").attr("transform", e.transform);
+			})
+			.on("start", () => {
+				this.#svg.style("cursor", "move");
+			})
+			.on("end", () => {
+				this.#svg.style("cursor", "pointer");
+			});
+		this.#svg.call(this.#zoom);
 	}
 
-	function resetZoom() {
-		d3.select("svg").transition().call(zoom.scaleTo, 1);
+	zoomIn() {
+		this.#svg.transition().call(this.#zoom.scaleBy, 2);
+	}
+	zoomOut() {
+		this.#svg.transition().call(this.#zoom.scaleBy, 0.5);
 	}
 
-	function center() {
-		d3.select("svg")
-			.transition()
-			.call(zoom.translateTo, 0.5 * width, 0.5 * height);
+	resetZoom() {
+		this.#svg.transition().call(this.#zoom.scaleTo, 1);
 	}
 
-	function panLeft() {
-		d3.select("svg").transition().call(zoom.translateBy, -50, 0);
+	center() {
+		this.#svg.transition().call(this.#zoom.translateTo, 0.5 * this.#width, 0.5 * this.#height);
 	}
 
-	function panRight() {
-		d3.select("svg").transition().call(zoom.translateBy, 50, 0);
+	panLeft() {
+		this.#svg.transition().call(this.#zoom.translateBy, -50, 0);
+	}
+
+	panRight() {
+		this.#svg.transition().call(this.#zoom.translateBy, 50, 0);
 	}
 }
