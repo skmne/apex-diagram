@@ -40,10 +40,18 @@ export default class Zoom {
 	}
 
 	panLeft() {
-		this.#svg.transition().call(this.#zoom.translateBy, -50, 0);
+		this.#svg.transition().duration(50).call(this.#zoom.translateBy, -10, 0);
 	}
 
 	panRight() {
-		this.#svg.transition().call(this.#zoom.translateBy, 50, 0);
+		this.#svg.transition().duration(50).call(this.#zoom.translateBy, 10, 0);
+	}
+
+	panUp() {
+		this.#svg.transition().duration(50).call(this.#zoom.translateBy, 0, -10);
+	}
+
+	panDown() {
+		this.#svg.transition().duration(50).call(this.#zoom.translateBy, 0, 10);
 	}
 }

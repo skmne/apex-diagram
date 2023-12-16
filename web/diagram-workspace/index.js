@@ -126,6 +126,26 @@ document.getElementById("export").addEventListener("click", () => {
 	console.log("export");
 });
 
+document.addEventListener("keydown", function (event) {
+	switch (event.keyCode) {
+		case 65: // 'A'
+			diagram.getZoom().panLeft();
+			break;
+		case 83: // 'S'
+			diagram.getZoom().panDown();
+			break;
+		case 68: // 'D'
+			diagram.getZoom().panRight();
+			break;
+		case 87: // 'W'
+			diagram.getZoom().panUp();
+			break;
+		case 32: // spacebar
+			diagram.getZoom().center();
+			break;
+	}
+});
+
 function getData() {
 	return {
 		nodes: [
