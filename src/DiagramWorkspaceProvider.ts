@@ -19,6 +19,43 @@ export default class DiagramWorkspaceProvider {
 		);
 		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent(context);
 
+		this.diagramWorkspaceWebviewPanel.webview.onDidReceiveMessage(
+			async (message: any) => {
+				switch (
+					message.command // Handle messages from the webview
+				) {
+					case "export":
+						vscode.window
+							.showSaveDialog({
+								saveLabel: "Save Apex Diagram",
+								// defaultUri: vscode.Uri.file(os.homedir()),
+								filters: {
+									// eslint-disable-next-line @typescript-eslint/naming-convention
+									Images: ["svg"],
+								},
+							})
+							.then((fileInfos: any) => {
+								console.log("try to write apex diagram here:", fileInfos);
+								fs.writeFileSync(fileInfos.fsPath, message.text);
+								vscode.window
+									.showInformationMessage(
+										`Apex diagram was successfully saved!`,
+										{ modal: false },
+										"Open"
+									)
+									.then((selectedButton) => {
+										if (selectedButton === "Open") {
+											vscode.env.openExternal(fileInfos.fsPath); // Open the URI externally
+										}
+									});
+							});
+						break;
+				}
+			},
+			undefined,
+			context.subscriptions
+		);
+
 		this.diagramWorkspaceWebviewPanel.onDidDispose(this.destroy, null, context.subscriptions);
 	}
 

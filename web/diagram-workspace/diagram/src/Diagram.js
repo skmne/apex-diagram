@@ -15,8 +15,9 @@ class Diagram {
 	#width; //default value
 	#height;
 	#zoom;
-
+	#svgElement;
 	constructor(svgElement) {
+		this.#svgElement = svgElement;
 		this.#svg = d3.select(svgElement);
 		this.#width = svgElement.getAttribute("width");
 		this.#height = svgElement.getAttribute("height");
@@ -56,13 +57,38 @@ class Diagram {
 	}
 
 	setStyle(style) {
-		state.style.nodeForeground = style.nodeForeground ? style.nodeForeground : state.style.nodeForeground;
-		state.style.nodeBackground = style.nodeBackground ? style.nodeBackground : state.style.nodeBackground;
-		state.style.fontFamily = style.fontFamily ? style.fontFamily : state.style.fontFamily;
-		state.style.fontSize = style.fontSize ? style.fontSize : state.style.fontSize;
-		state.style.fontColor = style.fontColor ? style.fontColor : state.style.fontColor;
+		state.style.nodeForeground = style.nodeForeground
+			? this.#converCSSVarToValue(style.nodeForeground)
+			: state.style.nodeForeground;
+		state.style.nodeBackground = style.nodeBackground
+			? this.#converCSSVarToValue(style.nodeBackground)
+			: state.style.nodeBackground;
+		state.style.fontFamily = style.fontFamily
+			? this.#converCSSVarToValue(style.fontFamily)
+			: state.style.fontFamily;
+		state.style.fontSize = style.fontSize ? this.#converCSSVarToValue(style.fontSize) : state.style.fontSize;
+		state.style.fontColor = style.fontColor
+			? this.#converCSSVarToValue(style.fontColor)
+			: state.style.fontColor;
 		state.style.nodeWidth = style.nodeWidth ? style.nodeWidth : state.style.nodeWidth;
 		state.style.nodeHeight = style.nodeHeight ? style.nodeHeight : state.style.nodeHeight;
+
+		// state.style.nodeBackground = getComputedStyle(document.documentElement, null).getPropertyValue(
+		// 	state.style.nodeBackground
+		// );
+	}
+
+	#converCSSVarToValue(source) {
+		const cssVars = source.match(/var\(\D+?\)/gim);
+		if (cssVars) {
+			cssVars.forEach((item) => {
+				let cssValue = getComputedStyle(document.documentElement).getPropertyValue(
+					item.substring(4, item.length - 1)
+				);
+				source = source.replace(item, cssValue);
+			});
+		}
+		return source;
 	}
 
 	build() {

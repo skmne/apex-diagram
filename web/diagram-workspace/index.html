@@ -64,7 +64,7 @@
 			overflow: hidden;
 		}
 		header {
-			padding: 0.67rem;
+			padding: 0rem;
 		}
 		.group-button {
 			position: fixed;
@@ -94,6 +94,12 @@
 			border-bottom-right-radius: 15%;
 			border-top-width: 0;
 		}
+		button {
+			border: 0;
+		}
+		.zoom {
+			padding-top: 16px;
+		}
 	</style>
 
 	<body>
@@ -102,78 +108,120 @@
 				<!-- <a id="zoomIn">Zoom in</a>
 				<a id="zoomOut">Zoom out</a>
 				<a id="resetZoom">Reset zoom</a> -->
-				<a id="panLeft">Pan left</a>
+				<!-- <a id="panLeft">Pan left</a>
 				<a id="panRight">Pan right</a>
-				<a id="center">Center</a>
-				<a id="export">Export</a>
-				<a id="add">Add</a>
-				<a id="remove">Remove</a>
+				<a id="center">Center</a> -->
+				<!-- <a id="add">Add</a>
+				<a id="remove">Remove</a> -->
 			</div>
 		</header>
 		<div class="group-button">
-			<button id="zoomIn">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					x="0px"
-					y="0px"
-					viewBox="0 0 52 52"
-					enable-background="new 0 0 52 52"
-					xml:space="preserve"
-				>
-					<g>
+			<div>
+				<button id="export">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						x="0px"
+						y="0px"
+						viewBox="0 0 52 52"
+						enable-background="new 0 0 52 52"
+						xml:space="preserve"
+					>
+						<g>
+							<path
+								fill="#FFFFFF"
+								d="M48.5,31h-3c-0.8,0-1.5,0.8-1.5,1.5v10c0,0.8-0.7,1.5-1.5,1.5h-33C8.7,44,8,43.3,8,42.5v-10
+		C8,31.8,7.3,31,6.5,31h-3C2.7,31,2,31.8,2,32.5V46c0,2.2,1.8,4,4,4h40c2.2,0,4-1.8,4-4V32.5C50,31.8,49.3,31,48.5,31z"
+							/>
+							<path
+								fill="#FFFFFF"
+								d="M27,2.4c-0.6-0.6-1.5-0.6-2.1,0L11.4,15.9c-0.6,0.6-0.6,1.5,0,2.1l2.1,2.1c0.6,0.6,1.5,0.6,2.1,0l5.6-5.6
+		c0.6-0.6,1.8-0.2,1.8,0.7v21.2c0,0.8,0.6,1.5,1.4,1.5h3c0.8,0,1.6-0.8,1.6-1.5V15.3c0-0.9,1-1.3,1.7-0.7l5.6,5.6
+		c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1c0.6-0.6,0.6-1.5,0-2.1L27,2.4z"
+							/>
+						</g>
+					</svg>
+				</button>
+			</div>
+			<div class="zoom">
+				<button id="zoomIn">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						x="0px"
+						y="0px"
+						viewBox="0 0 52 52"
+						enable-background="new 0 0 52 52"
+						xml:space="preserve"
+					>
+						<g>
+							<path
+								d="M31,19h-6v-6c0-0.6-0.4-1-1-1h-4c-0.6,0-1,0.4-1,1v6h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6v6
+							c0,0.6,0.4,1,1,1h4c0.6,0,1-0.4,1-1v-6h6c0.6,0,1-0.4,1-1v-4C32,19.4,31.6,19,31,19z"
+							/>
+						</g>
 						<path
-							d="M31,19h-6v-6c0-0.6-0.4-1-1-1h-4c-0.6,0-1,0.4-1,1v6h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6v6
-						c0,0.6,0.4,1,1,1h4c0.6,0,1-0.4,1-1v-6h6c0.6,0,1-0.4,1-1v-4C32,19.4,31.6,19,31,19z"
+							d="M49.6,45.2L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
+						l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.2z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
+						S29.7,36,22,36z"
 						/>
-					</g>
-					<path
-						d="M49.6,45.2L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
-					l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.2z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
-					S29.7,36,22,36z"
-					/>
-				</svg>
-			</button>
-			<button id="resetZoom">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					x="0px"
-					y="0px"
-					viewBox="0 0 52 52"
-					enable-background="new 0 0 52 52"
-					xml:space="preserve"
-				>
-					<g>
+					</svg>
+				</button>
+				<button id="resetZoom">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						x="0px"
+						y="0px"
+						viewBox="0 0 52 52"
+						enable-background="new 0 0 52 52"
+						xml:space="preserve"
+					>
+						<g>
+							<path
+								d="M29.6 23.9H45c1 0 1.3-1.1.5-1.9l-4.9-5 9-9.1c.5-.5.5-1.4 0-1.9l-3.7-3.7c-.5-.4-1.3-.4-1.9.1l-9 9-5.1-4.9C29.1 5.7 28 6 28 7v15.4c0 .7.9 1.5 1.6 1.5zM22.4 28H7c-1 0-1.3 1.1-.5 1.9l4.9 5-9 9.1c-.5.5-.5 1.4 0 1.9l3.7 3.7c.5.5 1.3.5 1.9 0l9.1-9.1 5.1 4.9c.7.9 1.8.6 1.8-.4V29.7c0-.7-.9-1.7-1.6-1.7z"
+							></path>
+						</g>
+					</svg>
+				</button>
+				<button id="zoomOut">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						x="0px"
+						y="0px"
+						viewBox="0 0 52 52"
+						enable-background="new 0 0 52 52"
+						xml:space="preserve"
+					>
+						<g>
+							<path d="M19,25h12c0.6,0,1-0.4,1-1v-4c0-0.6-0.4-1-1-1H19" />
+						</g>
+						<g>
+							<path d="M19,19h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6" />
+						</g>
 						<path
-							d="M29.6 23.9H45c1 0 1.3-1.1.5-1.9l-4.9-5 9-9.1c.5-.5.5-1.4 0-1.9l-3.7-3.7c-.5-.4-1.3-.4-1.9.1l-9 9-5.1-4.9C29.1 5.7 28 6 28 7v15.4c0 .7.9 1.5 1.6 1.5zM22.4 28H7c-1 0-1.3 1.1-.5 1.9l4.9 5-9 9.1c-.5.5-.5 1.4 0 1.9l3.7 3.7c.5.5 1.3.5 1.9 0l9.1-9.1 5.1 4.9c.7.9 1.8.6 1.8-.4V29.7c0-.7-.9-1.7-1.6-1.7z"
-						></path>
-					</g>
-				</svg>
-			</button>
-			<button id="zoomOut">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					x="0px"
-					y="0px"
-					viewBox="0 0 52 52"
-					enable-background="new 0 0 52 52"
-					xml:space="preserve"
-				>
-					<g>
-						<path d="M19,25h12c0.6,0,1-0.4,1-1v-4c0-0.6-0.4-1-1-1H19" />
-					</g>
-					<g>
-						<path d="M19,19h-6c-0.6,0-1,0.4-1,1v4c0,0.6,0.4,1,1,1h6" />
-					</g>
-					<path
-						d="M49.6,45.3L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
-				l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.3z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
-				S29.7,36,22,36z"
-					/>
-				</svg>
-			</button>
+							d="M49.6,45.3L38.1,33.8C40.5,30.5,42,26.4,42,22c0-11-9-20-20-20S2,11,2,22s9,20,20,20c4.4,0,8.5-1.5,11.8-3.9
+					l11.5,11.5c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1C50.1,46.9,50.1,45.9,49.6,45.3z M22,36c-7.7,0-14-6.3-14-14S14.3,8,22,8s14,6.3,14,14
+					S29.7,36,22,36z"
+						/>
+					</svg>
+				</button>
+			</div>
+
+			<div style="padding-top: 30px">
+				<!-- <a id="zoomIn">Zoom in</a>
+				<a id="zoomOut">Zoom out</a>
+				<a id="resetZoom">Reset zoom</a> -->
+				<!-- <a id="panLeft">Pan left</a>
+				<a id="panRight">Pan right</a>
+				<a id="center">Center</a> -->
+				<div style="padding-bottom: 10px">
+					<a id="add">A</a>
+				</div>
+				<div>
+					<a id="remove">R</a>
+				</div>
+			</div>
 		</div>
 		<div id="container" style="width: 100%; min-height: 100%">
-			<svg id="uml-diagram"></svg>
+			<svg xmlns="http://www.w3.org/2000/svg" id="uml-diagram"></svg>
 		</div>
 	</body>
 

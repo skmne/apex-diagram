@@ -3,6 +3,11 @@ var svgContainer = document.getElementById("container").getBoundingClientRect();
 var width = svgContainer.width;
 var height = svgContainer.height - header.height;
 const svgElement = document.querySelector("#uml-diagram");
+let vscodeAPI;
+
+if (typeof acquireVsCodeApi === "function") {
+	vscodeAPI = acquireVsCodeApi();
+}
 
 setSvgSize(svgElement, width, height);
 window.addEventListener(
@@ -105,27 +110,6 @@ document.getElementById("resetZoom").addEventListener("click", () => {
 	diagram.getZoom().resetZoom();
 });
 
-document.getElementById("panLeft").addEventListener("click", () => {
-	console.log("panLeft");
-
-	diagram.getZoom().panLeft();
-});
-
-document.getElementById("panRight").addEventListener("click", () => {
-	console.log("panRight");
-
-	diagram.getZoom().panRight();
-});
-
-document.getElementById("center").addEventListener("click", () => {
-	console.log("center");
-	diagram.getZoom().center();
-});
-
-document.getElementById("export").addEventListener("click", () => {
-	console.log("export");
-});
-
 document.addEventListener("keydown", function (event) {
 	switch (event.keyCode) {
 		case 65: // 'A'
@@ -145,6 +129,66 @@ document.addEventListener("keydown", function (event) {
 			break;
 	}
 });
+
+document.getElementById("export").addEventListener("click", () => {
+	console.log("export");
+
+	if (vscodeAPI) {
+		const svgString = getSVGText();
+		vscodeAPI.postMessage({
+			command: "export",
+			text: svgString,
+		});
+	} else {
+		exportSvg();
+	}
+});
+
+function exportSvg() {
+	// Get the SVG content as a string
+	const svgString = getSVGText();
+	const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+
+	const link = document.createElement("a");
+	link.href = URL.createObjectURL(blob);
+	link.download = "exported-svg.svg";
+	link.click();
+}
+
+function exportToPng() {
+	// var svgElement = document.getElementById("d3-container").firstChild;
+
+	// Create a canvas element
+	var canvas = document.createElement("canvas");
+	canvas.width = svgElement.clientWidth;
+	canvas.height = svgElement.clientHeight;
+
+	// Get the 2D rendering context
+	var ctx = canvas.getContext("2d");
+
+	// Draw the SVG onto the canvas
+	var img = new Image();
+	img.onload = function () {
+		ctx.drawImage(img, 0, 0);
+
+		// Convert the canvas to a data URL
+		var dataUrl = canvas.toDataURL("image/png");
+
+		// Create a download link and trigger a click to download the PNG
+		var link = document.createElement("a");
+		link.href = dataUrl;
+		link.download = "exported-d3.png";
+		link.click();
+	};
+
+	var svgData = getSVGText();
+	img.src = "data:image/svg+xml," + encodeURIComponent(svgData);
+}
+
+function getSVGText() {
+	const serializer = new XMLSerializer();
+	return serializer.serializeToString(svgElement);
+}
 
 function getData() {
 	return {
