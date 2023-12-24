@@ -35,9 +35,9 @@ class Diagram {
 
 	removeItems(itemIds) {
 		state.nodes = state.nodes.filter((node) => !itemIds.includes(node.id));
-		state.links = state.links.filter(
-			(link) => !itemIds.includes(link.source) || !itemIds.includes(link.target)
-		);
+		state.links = state.links.filter((link) => {
+			return !(itemIds.includes(link.source) || itemIds.includes(link.target));
+		});
 		this.recreateDiagram();
 	}
 
