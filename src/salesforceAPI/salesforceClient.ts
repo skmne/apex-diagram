@@ -1,8 +1,9 @@
 import * as jsforce from "jsforce";
 
-import ApexClass from "./ApexClass";
+import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import QueryResult from "./QueryResult";
+import { Memento } from "vscode";
 
 const APEX_SYMBOL_TABEL_CONTAINER_NAME = "Apex Schema VSCode Extention";
 
@@ -25,16 +26,18 @@ class BaseAPI {
 }
 
 class ToolingApi extends BaseAPI {
-	constructor(instanceUrl: string, accessToken: string) {
+	cacheState: Memento;
+	constructor(instanceUrl: string, accessToken: string, workspaceState: Memento) {
 		super(instanceUrl, accessToken);
+		this.cacheState = workspaceState;
 		this.baseUrl += "/tooling";
 	}
 
 	async getApexClasses(): Promise<ApexClass[]> {
 		let query = `
-    SELECT Id, Name, ApiVersion, Body 
-    FROM ApexClass
-    `;
+    		SELECT Id, Name, ApiVersion, Body, LastModifiedDate
+    		FROM ApexClass
+    	`;
 		query += ` WHERE ManageableState != \'installed\'`;
 
 		const result: any = await this.query(query);
@@ -43,27 +46,20 @@ class ToolingApi extends BaseAPI {
 		return apexClasses?.filter((item) => !item.Body.toLowerCase().includes("@istest"));
 	}
 
-	async getUnmangedApexClasses(apexClassNames: any) {
+	async getApexClassesByNames(apexClassNames: any) {
 		let query = `
-    SELECT Id, Name, Body 
-    FROM ApexClass
-    `;
+    		SELECT Id, Name , Body, LastModifiedDate
+   		 	FROM ApexClass
+    	`;
 
-		if (apexClassNames) {
-			let apexClassNameConditions = apexClassNames.map((item: any) => {
-				return "'" + item + "'";
-			});
-			query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
-		} else {
-			query += ` WHERE ManageableState != \'installed\'`;
-		}
-		console.log(query);
+		let apexClassNameConditions = apexClassNames.map((item: any) => {
+			return "'" + item + "'";
+		});
+		query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
 
 		const result: any = await this.query(query);
-		console.log("classes result = ", result);
 		const apexClasses: ApexClass[] = result?.records;
-
-		return apexClasses?.filter((item) => !item.Body.toLowerCase().includes("@istest"));
+		return apexClasses;
 	}
 
 	async getMeatadaContainerByName(name: string) {
@@ -133,13 +129,13 @@ class ToolingApi extends BaseAPI {
 		});
 	}
 
-	async getApexClassMemberByAsyncReqId(asyncRequestId: string) {
+	getApexClassMemberByAsyncReqId(asyncRequestId: string) {
 		return this.query(
 			`
-        SELECT Id, SymbolTable 
-        FROM ApexClassMember 
-        WHERE MetadataContainerId = \'${asyncRequestId}\'
-      `
+				SELECT Id, SymbolTable, LastSyncDate
+				FROM ApexClassMember 
+				WHERE MetadataContainerId = \'${asyncRequestId}\'
+			`
 		);
 	}
 
@@ -166,7 +162,7 @@ class ToolingApi extends BaseAPI {
 	async generateApexSymbolTable(apexClasses: any) {
 		return this.removeMetadaContainer(APEX_SYMBOL_TABEL_CONTAINER_NAME)
 			.then(() => {
-				return Promise.all([this.getUnmangedApexClasses(apexClasses), this.createMetadataContainer()]);
+				return Promise.all([this.getApexClassesByNames(apexClasses), this.createMetadataContainer()]);
 			})
 			.then((result) => {
 				let apexClasses: any = result[0];
@@ -177,8 +173,17 @@ class ToolingApi extends BaseAPI {
 					return new Promise((resolve) => resolve(apexClasses));
 				}
 				console.log("apexClasses : ", apexClasses);
+
+				let cachedApexClassMembers = this.#getCachedApexClassMembers(apexClasses);
+				let uncachedApexClasses = this.#getUncachedApexClasses(apexClasses);
+				console.log("FROM CASH ===", cachedApexClassMembers);
+				console.log("New ===", uncachedApexClasses);
+
+				if (uncachedApexClasses.length === 0) {
+					return new Promise((resolve) => resolve(cachedApexClassMembers));
+				}
 				console.log("createMetadataContainer : ", container);
-				return this.createApexClassMember(apexClasses, container.id)
+				return this.createApexClassMember(uncachedApexClasses, container.id)
 					.then(async (apexMembers) => {
 						console.log("apexMembers : ", apexMembers);
 						return this.createContainerAsyncRequest(container.id);
@@ -195,11 +200,19 @@ class ToolingApi extends BaseAPI {
 							console.error(reqRes.records);
 							throw Error("Generate Sybmol Table was Failed");
 						}
+					})
+					.then((apexClassMemberResult: any) => {
+						return new Promise(async (resolve) => {
+							const apexClassMembers: Array<ApexClassMember> =
+								apexClassMemberResult.records;
+							this.#saveToCache(apexClassMembers);
+							resolve([...cachedApexClassMembers, ...apexClassMembers]);
+						});
 					});
-			})
-			.catch((err) => {
-				console.error(err);
 			});
+		// .catch((err) => {
+		// 	console.error(err);
+		// });
 	}
 
 	async checkAsyncRequestResult(asyncReq: any) {
@@ -212,6 +225,30 @@ class ToolingApi extends BaseAPI {
 			console.log("interval reqRes : ", reqRes);
 		}
 		return reqRes;
+	}
+	#saveToCache(apexClassMembers: ApexClassMember[]) {
+		for (let item of apexClassMembers) {
+			const cacheKey = `${item.SymbolTable.name}${item.LastSyncDate}`;
+			this.cacheState.update(cacheKey, item);
+		}
+	}
+	#getCachedApexClassMembers(apexClasses: ApexClass[]): ApexClassMember[] {
+		const cachedMembers: ApexClassMember[] = [];
+		for (const apexClass of apexClasses) {
+			const cacheKey = `${apexClass.Name}${apexClass.LastModifiedDate}`;
+			const apexClassMember: ApexClassMember | undefined = this.cacheState.get(cacheKey);
+
+			if (apexClassMember) {
+				cachedMembers.push(apexClassMember);
+			}
+		}
+		return cachedMembers;
+	}
+	#getUncachedApexClasses(apexClasses: ApexClass[]): ApexClass[] {
+		return apexClasses.filter((apexClass) => {
+			const cacheKey = `${apexClass.Name}${apexClass.LastModifiedDate}`;
+			return !this.cacheState.get(cacheKey);
+		});
 	}
 
 	#sleep(ms: number) {

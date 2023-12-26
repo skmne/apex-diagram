@@ -4,9 +4,10 @@ import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
 import { getSalesforceUserInfo } from "./sfdx/sfdx";
 import UserInfo from "./sfdx/UserInfo";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
-import ApexClass from "./salesforceAPI/ApexClass";
+import { ApexClass } from "./salesforceAPI/ApexClass";
 import { parseDependency } from "./dependencyAnalaizer";
 import { DiagrammModel } from "./DiagrammModel";
+import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 
 export async function activate(context: vscode.ExtensionContext) {
 	const rootPath: any =
@@ -20,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const userInfo: UserInfo = await getSalesforceUserInfo(rootPath);
 	vscode.window.showInformationMessage("user info = " + userInfo.username);
-	const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken);
+	const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken, context.workspaceState);
 	const apexClasses: ApexClass[] = await tooling.getApexClasses();
 	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, apexClasses);
 	const activeApexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, []);
@@ -33,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		canSelectMany: true,
 	});
 
-	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh());
+	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh()); //todo add refresh logic
 
 	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: any, selectedNodes: any) => {
 		if (!selectedNodes) {
@@ -45,12 +46,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		selectedNodes.forEach((node: any) => {
 			node.contextValue = "remove_context";
 		});
-		// apexClassesTreeProvider.refreshItems(selectedNodes);
 
 		const nodeIds = selectedNodes.map((item: any) => item.id);
 		activeApexClassesTreeProvider.add(selectedNodes);
 		apexClassesTreeProvider.remove(nodeIds);
-		// apexClassesTreeProvider.refreshItems(selectedNodes);
 
 		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
 		let newData = new DiagrammModel();
@@ -62,8 +61,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		const apexClassNames = currentData.nodes.map((node: any) => node.name);
 		console.log(apexClassNames);
 		if (apexClassNames.length > 1) {
-			const apexSymbolTable: any = await tooling.generateApexSymbolTable(apexClassNames);
-			const dependencyData = parseDependency(apexSymbolTable.records);
+			const apexClassMembers: any = await tooling.generateApexSymbolTable(apexClassNames);
+			const dependencyData = parseDependency(apexClassMembers);
 
 			newData.links = dependencyData.links;
 			console.log("Dependency  = ", dependencyData);

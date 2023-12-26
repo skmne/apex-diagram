@@ -1,5 +1,6 @@
-export default class ApexClass {
-	"NamespacePrefix": string;
-	"Name": string;
-	"Body": string;
-}
+export type ApexClass = {
+	NamespacePrefix: string;
+	Name: string;
+	Body: string;
+	LastModifiedDate: Date;
+};
