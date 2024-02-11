@@ -7,7 +7,6 @@ import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { parseDependency } from "./dependencyAnalaizer";
 import { DiagrammModel } from "./DiagrammModel";
-import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 
 export async function activate(context: vscode.ExtensionContext) {
 	const rootPath: any =
