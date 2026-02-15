@@ -53,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.withProgress(
 			{
 				location: vscode.ProgressLocation.Notification,
-				title: `Add Apex Class ${selectedNodes.length > 1 ? "es" : ""}`,
+				title: `Add Apex Class ${selectedNodes && selectedNodes.length > 1 ? "es" : ""}`,
 			},
 			async (progress) => {
 				await addEntry(node, selectedNodes, progress);

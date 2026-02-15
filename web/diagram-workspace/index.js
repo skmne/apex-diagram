@@ -1,3 +1,5 @@
+import UMLDiagram from '@alesik/uml-diagram';
+
 var header = document.getElementById("header").getBoundingClientRect();
 var svgContainer = document.getElementById("container").getBoundingClientRect();
 var width = svgContainer.width;
@@ -29,7 +31,7 @@ function setSvgSize(svgElement, width, height) {
 	}
 }
 
-const diagram = new MyLibrary.default(svgElement);
+const diagram = new UMLDiagram(svgElement);
 
 diagram.setStyle({
 	nodeForeground: "var(--vscode-editor-foreground)",

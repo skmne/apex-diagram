@@ -105,31 +105,16 @@ export default class DiagramWorkspaceProvider {
 	}
 
 	private getWebviewContent(context: vscode.ExtensionContext) {
-		const pathToWebDist = path.join(context.extensionPath, "./web/diagram-workspace");
-		const pathToHtml = path.join(pathToWebDist, "index.html");
+		const pathToHtmlTemplate = path.join(context.extensionPath, "./web/diagram-workspace/index.html");
+		const pathToBundle = path.join(context.extensionPath, "./dist/webview/bundle.js");
 
-		let html = fs.readFileSync(pathToHtml).toString();
+		let html = fs.readFileSync(pathToHtmlTemplate).toString();
 
-		html = this.modifyHtmlWithWebviewUri(html, pathToWebDist, /(<script\s+src=")([^"]+)(".*?><\/script>)/gm, 2);
-		return html;
-	}
-
-	private modifyHtmlWithWebviewUri(
-		html: string,
-		pathToWebDist: string,
-		sourceRegex: RegExp,
-		matchIndex: 2
-	): string {
-		let newScriptSrc;
-		let match: RegExpExecArray | null;
-
-		while ((match = sourceRegex.exec(html)) !== null) {
-			const matchedPath: string = match[matchIndex];
-			newScriptSrc = this.diagramWorkspaceWebviewPanel.webview.asWebviewUri(
-				vscode.Uri.file(path.join(pathToWebDist, matchedPath))
-			);
-			html = html.replace(`${matchedPath}`, newScriptSrc.toString());
-		}
+		// Replace bundle.js path with webview URI
+		const bundleUri = this.diagramWorkspaceWebviewPanel.webview.asWebviewUri(
+			vscode.Uri.file(pathToBundle)
+		);
+		html = html.replace("./bundle.js", bundleUri.toString());
 
 		return html;
 	}
