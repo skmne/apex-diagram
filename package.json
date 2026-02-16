@@ -4,7 +4,7 @@
   "description": "Apex diagram generates UML class diagram based on the apex code",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.78.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other"
@@ -105,27 +105,27 @@
     "watch": "tsc -watch -p ./",
     "watch:webview": "webpack --config webpack.webview.config.js --watch",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "lint": "eslint src/",
+    "test": "vscode-test",
+    "test:unit": "tsc -p ./ && mocha --ui tdd out/test/suite/node.test.js out/test/suite/link.test.js out/test/suite/dependencyAnalaizer.test.js"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
-    "@types/jsforce": "^1.11.3",
     "@types/mocha": "^10.0.1",
-    "@types/node": "16.x",
-    "@types/vscode": "^1.78.0",
-    "@typescript-eslint/eslint-plugin": "^5.59.1",
-    "@typescript-eslint/parser": "^5.59.1",
-    "@vscode/test-electron": "^2.3.0",
-    "eslint": "^8.39.0",
-    "glob": "^8.1.0",
-    "mocha": "^10.2.0",
-    "typescript": "^5.0.4",
+    "@types/node": "^22.19.11",
+    "@types/vscode": "^1.109.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.2",
+    "mocha": "^10.8.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0",
     "webpack": "^5.105.2",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
     "@alesik/uml-diagram": "^0.1.0",
-    "jsforce": "^1.11.0"
+    "jsforce": "^3.10.14"
   }
 }

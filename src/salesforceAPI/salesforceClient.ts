@@ -1,22 +1,21 @@
-import * as jsforce from "jsforce";
+import { Connection } from "jsforce";
 
 import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
-import QueryResult from "./QueryResult";
 import { Memento } from "vscode";
 
 class BaseAPI {
 	protected baseUrl: string;
 	protected accessToken: string;
 	protected instanceUrl: string;
-	protected conn: any;
+	protected conn: Connection;
 
 	constructor(instanceUrl: string, accessToken: string) {
 		this.instanceUrl = instanceUrl;
 		this.baseUrl = instanceUrl + "/services/data/v54.0";
 		this.accessToken = accessToken;
 
-		this.conn = new jsforce.Connection({
+		this.conn = new Connection({
 			instanceUrl: this.instanceUrl,
 			accessToken: this.accessToken,
 		});
@@ -50,7 +49,7 @@ class ToolingApi extends BaseAPI {
    		 	FROM ApexClass
     	`;
 
-		let apexClassNameConditions = apexClassNames.map((item: any) => {
+		const apexClassNameConditions = apexClassNames.map((item: any) => {
 			return "'" + item + "'";
 		});
 		query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
@@ -71,14 +70,7 @@ class ToolingApi extends BaseAPI {
 	}
 
 	public async deleteMetadataContainer(metadataContainerIds: Array<string>) {
-		return new Promise((resolve, reject) => {
-			this.conn.tooling.sobject("MetadataContainer").delete(metadataContainerIds, (err: any, res: any) => {
-				if (err) {
-					reject(err);
-				}
-				resolve(res);
-			});
-		});
+		return this.conn.tooling.sobject("MetadataContainer").destroy(metadataContainerIds);
 	}
 
 	public async createMetadataContainer() {
@@ -86,45 +78,18 @@ class ToolingApi extends BaseAPI {
 			Name: "Apex Diagram:" + new Date().valueOf(),
 		};
 		console.log("container = ", container);
-		return new Promise((resolve, reject) => {
-			this.conn.tooling.sobject("MetadataContainer").create(container, (err: any, res: any) => {
-				if (err) {
-					console.error(err);
-					reject(err);
-				}
-				resolve(res);
-			});
-		});
+		return this.conn.tooling.sobject("MetadataContainer").create(container);
 	}
 
 	public async createApexClassMember(apexClasses: any, metadataContainerId: string) {
 		const apexClassMembers = this.getApexMemberes(apexClasses, metadataContainerId);
-		return new Promise((resolve, reject) => {
-			this.conn.tooling.sobject("ApexClassMember").create(apexClassMembers, (err: any, res: any) => {
-				if (err) {
-					console.error(err);
-					reject(err);
-				}
-				resolve(res);
-			});
-		});
+		return this.conn.tooling.sobject("ApexClassMember").create(apexClassMembers);
 	}
 
 	public async createContainerAsyncRequest(containerId: string) {
-		return new Promise((resolve, reject) => {
-			this.conn.tooling.sobject("ContainerAsyncRequest").create(
-				{
-					MetadataContainerId: containerId,
-					IsCheckOnly: true,
-				},
-				(err: any, res: any) => {
-					if (err) {
-						console.error(err);
-						reject(err);
-					}
-					resolve(res);
-				}
-			);
+		return this.conn.tooling.sobject("ContainerAsyncRequest").create({
+			MetadataContainerId: containerId,
+			IsCheckOnly: true,
 		});
 	}
 
@@ -137,8 +102,8 @@ class ToolingApi extends BaseAPI {
 				}
 				console.log("apexClasses : ", apexClasses);
 
-				let cachedApexClassMembers = this.getCachedApexClassMembers(apexClasses);
-				let uncachedApexClasses = this.getUncachedApexClasses(apexClasses);
+				const cachedApexClassMembers = this.getCachedApexClassMembers(apexClasses);
+				const uncachedApexClasses = this.getUncachedApexClasses(apexClasses);
 				console.log("FROM CASH ===", cachedApexClassMembers);
 				console.log("New ===", uncachedApexClasses);
 
@@ -186,22 +151,14 @@ class ToolingApi extends BaseAPI {
 		return this.query(
 			`
 				SELECT Id, SymbolTable, LastSyncDate
-				FROM ApexClassMember 
+				FROM ApexClassMember
 				WHERE MetadataContainerId = \'${asyncRequestId}\'
 			`
 		);
 	}
 
 	private async query(query: string) {
-		return new Promise((resolve, reject) => {
-			this.conn.tooling.query(query, (err: any, res: QueryResult) => {
-				if (err) {
-					console.error(err);
-					reject(err);
-				}
-				resolve(res);
-			});
-		});
+		return this.conn.tooling.query(query);
 	}
 
 	private async checkAsyncRequestResult(asyncReq: any) {
@@ -216,7 +173,7 @@ class ToolingApi extends BaseAPI {
 		return reqRes;
 	}
 	private saveToCache(apexClassMembers: ApexClassMember[]) {
-		for (let item of apexClassMembers) {
+		for (const item of apexClassMembers) {
 			const cacheKey = `${item.SymbolTable.name}`;
 			this.cacheState.update(cacheKey, item);
 		}
@@ -246,7 +203,7 @@ class ToolingApi extends BaseAPI {
 	}
 
 	private getApexMemberes(apexClasses: any, metadataContainerId: string) {
-		let apexMembers = [];
+		const apexMembers = [];
 		for (const apexClass of apexClasses) {
 			apexMembers.push({
 				Body: apexClass.Body,
