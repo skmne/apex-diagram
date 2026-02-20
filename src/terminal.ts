@@ -1,8 +1,8 @@
 import * as cp from "child_process";
 
-const execShell = (cmd: string, projectPath: any) =>
+const execShell = (cmd: string, projectPath: string) =>
 	new Promise<string>((resolve, reject) => {
-		cp.exec(cmd, { cwd: projectPath }, (err: any, out: any) => {
+		cp.exec(cmd, { cwd: projectPath }, (err: cp.ExecException | null, out: string) => {
 			if (err) {
 				try {
 					const errorResult = JSON.parse(out);

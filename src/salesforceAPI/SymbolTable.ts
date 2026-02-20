@@ -1,14 +1,16 @@
+import { ExternalReference } from "./ExternalReference";
+
 export class SymbolTable {
   public id: string | undefined;
-  public constructors: Array<any> = [];
-  public externalReferences: Array<any> = [];
-  public innerClasses: Array<any> = [];
-  public interfaces: Array<any> = [];
+  public constructors: unknown[] = [];
+  public externalReferences: ExternalReference[] = [];
+  public innerClasses: SymbolTable[] = [];
+  public interfaces: string[] = [];
   public key: string | undefined;
-  public methods: Array<any> = [];
+  public methods: unknown[] = [];
   public name?: string;
   public namespace?: string;
   public parentClass: string | undefined;
-  public tableDeclaration: any;
-  public variables: Array<any> = [];
+  public tableDeclaration: unknown;
+  public variables: unknown[] = [];
 }

@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
+import { ApexClass } from "./salesforceAPI/ApexClass";
 
 export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexClassTreeItem> {
-	constructor(private workspaceRoot: string, private apexClassMembers: Array<any>) {}
+	constructor(private workspaceRoot: string, private apexClassMembers: ApexClass[]) {}
 
 	private _onDidChangeTreeData: vscode.EventEmitter<ApexClassTreeItem | undefined | null | void> =
 		new vscode.EventEmitter<ApexClassTreeItem | undefined | null | void>();
@@ -27,7 +28,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		// this.refreshItems(this.apexClassTreeItems);
 		this.refresh();
 	}
-	sortByName(a: any, b: any) {
+	sortByName(a: ApexClassTreeItem, b: ApexClassTreeItem) {
 		const nameA = a.name.toUpperCase(); // ignore upper and lowercase
 		const nameB = b.name.toUpperCase(); // ignore upper and lowercase
 		if (nameA < nameB) {
@@ -49,7 +50,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		return element;
 	}
 
-	getChildren(element?: ApexClassTreeItem): Thenable<ApexClassTreeItem[]> {
+	getChildren(): Thenable<ApexClassTreeItem[]> {
 		if (!this.workspaceRoot) {
 			vscode.window.showInformationMessage("No sfdx connection in empty workspace");
 			return Promise.resolve([]);
@@ -69,7 +70,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 				new ApexClassTreeItem(
 					apexClass.NamespacePrefix,
 					apexClass.Name,
-					apexClass.ApiVersion,
+					apexClass.ApiVersion ?? "",
 					vscode.TreeItemCollapsibleState.None
 				)
 			);
@@ -78,7 +79,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 	}
 }
 
-class ApexClassTreeItem extends vscode.TreeItem {
+export class ApexClassTreeItem extends vscode.TreeItem {
 	id: string;
 	name: string;
 	tooltip: string;
@@ -87,9 +88,9 @@ class ApexClassTreeItem extends vscode.TreeItem {
 	contextValue: string = "add_context";
 
 	constructor(
-		public readonly prefix: any,
-		public readonly label: any,
-		private readonly version: any,
+		public readonly prefix: string,
+		public readonly label: string,
+		private readonly version: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState
 	) {
 		super(label, collapsibleState);

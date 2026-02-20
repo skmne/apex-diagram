@@ -1,7 +1,7 @@
 export class ExternalReference {
-  public methods: any;
-  public name: any;
-  public namespace: any;
-  public references: any;
-  public variables: any;
+  public methods: string[] = [];
+  public name: string = "";
+  public namespace: string = "";
+  public references: string[] = [];
+  public variables: string[] = [];
 }

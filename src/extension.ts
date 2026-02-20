@@ -1,15 +1,16 @@
 import * as vscode from "vscode";
-import { ApexClassTreeDataProvider } from "./ApexClassTreeDataProvider";
+import { ApexClassTreeDataProvider, ApexClassTreeItem } from "./ApexClassTreeDataProvider";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
 import { getSalesforceUserInfo } from "./sfdx/sfdx";
 import UserInfo from "./sfdx/UserInfo";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import { ApexClass } from "./salesforceAPI/ApexClass";
+import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 import { parseDependency } from "./dependencyAnalaizer";
 import { DiagrammModel } from "./DiagrammModel";
 
 export async function activate(context: vscode.ExtensionContext) {
-	const rootPath: any =
+	const rootPath: string | undefined =
 		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 			? vscode.workspace.workspaceFolders[0].uri.fsPath
 			: undefined;
@@ -49,7 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh()); //todo add refresh logic
 
-	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: any, selectedNodes: any) => {
+	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 		vscode.window.withProgress(
 			{
 				location: vscode.ProgressLocation.Notification,
@@ -61,15 +62,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		);
 	});
 
-	vscode.commands.registerCommand("active-apex-classes-view.removeEntry", (node: any, selectedNodes: any) => {
+	vscode.commands.registerCommand("active-apex-classes-view.removeEntry", (node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 		if (!selectedNodes) {
 			selectedNodes = [node];
 		}
 
-		selectedNodes.forEach((node: any) => {
+		selectedNodes.forEach((node: ApexClassTreeItem) => {
 			node.contextValue = "add_context";
 		});
-		const nodeIds = selectedNodes.map((item: any) => item.id);
+		const nodeIds = selectedNodes.map((item: ApexClassTreeItem) => item.id);
 		// apexClassesTreeProvider.refreshItems(selectedNodes);
 		activeApexClassesTreeProvider.remove(nodeIds);
 		apexClassesTreeProvider.add(selectedNodes);
@@ -81,7 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		);
 	});
 
-	vscode.commands.registerCommand("apex-classes-view.openWorkspace", (node: any) =>
+	vscode.commands.registerCommand("apex-classes-view.openWorkspace", () =>
 		vscode.commands.executeCommand("diagram-workspace.start")
 	);
 
@@ -92,32 +93,32 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	async function addEntry(node: any, selectedNodes: any, progress: any) {
+	async function addEntry(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[], progress: vscode.Progress<{ message?: string }>) {
 		if (!selectedNodes) {
 			selectedNodes = [node];
 		}
 		progress.report({ message: "Receiving Apex Classes Details" });
 		console.log("selected nodes", selectedNodes);
 
-		selectedNodes.forEach((node: any) => {
+		selectedNodes.forEach((node: ApexClassTreeItem) => {
 			node.contextValue = "remove_context";
 		});
 
-		const nodeIds = selectedNodes.map((item: any) => item.id);
+		const nodeIds = selectedNodes.map((item: ApexClassTreeItem) => item.id);
 		activeApexClassesTreeProvider.add(selectedNodes);
 		apexClassesTreeProvider.remove(nodeIds);
 
 		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
-		let newData = new DiagrammModel();
+		const newData = new DiagrammModel();
 		newData.nodes = selectedNodes;
 
-		let currentData = diagramWorkspace.getData();
+		const currentData = diagramWorkspace.getData();
 		currentData.nodes = [...currentData.nodes, ...selectedNodes];
 
-		const apexClassNames = currentData.nodes.map((node: any) => node.name);
+		const apexClassNames = currentData.nodes.map((node) => node.name);
 		console.log(apexClassNames);
 		if (apexClassNames.length > 1) {
-			const apexClassMembers: any = await tooling.generateApexSymbolTable(apexClassNames);
+			const apexClassMembers = await tooling.generateApexSymbolTable(apexClassNames as string[]) as ApexClassMember[];
 			progress.report({ message: "Analyzing Dependencies" });
 			const dependencyData = parseDependency(apexClassMembers);
 

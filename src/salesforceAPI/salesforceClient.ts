@@ -37,25 +37,25 @@ class ToolingApi extends BaseAPI {
     	`;
 		query += ` WHERE ManageableState != \'installed\'`;
 
-		const result: any = await this.query(query);
-		const apexClasses: ApexClass[] = result?.records;
+		const result = await this.query(query);
+		const apexClasses = result?.records as unknown as ApexClass[];
 
 		return apexClasses?.filter((item) => !item.Body.toLowerCase().includes("@istest"));
 	}
 
-	public async getApexClassesByNames(apexClassNames: any) {
+	public async getApexClassesByNames(apexClassNames: string[]) {
 		let query = `
     		SELECT Id, Name , Body, LastModifiedDate
    		 	FROM ApexClass
     	`;
 
-		const apexClassNameConditions = apexClassNames.map((item: any) => {
+		const apexClassNameConditions = apexClassNames.map((item: string) => {
 			return "'" + item + "'";
 		});
 		query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
 
-		const result: any = await this.query(query);
-		const apexClasses: ApexClass[] = result?.records;
+		const result = await this.query(query);
+		const apexClasses = result?.records as unknown as ApexClass[];
 		return apexClasses;
 	}
 
@@ -81,7 +81,7 @@ class ToolingApi extends BaseAPI {
 		return this.conn.tooling.sobject("MetadataContainer").create(container);
 	}
 
-	public async createApexClassMember(apexClasses: any, metadataContainerId: string) {
+	public async createApexClassMember(apexClasses: ApexClass[], metadataContainerId: string) {
 		const apexClassMembers = this.getApexMemberes(apexClasses, metadataContainerId);
 		return this.conn.tooling.sobject("ApexClassMember").create(apexClassMembers);
 	}
@@ -93,7 +93,7 @@ class ToolingApi extends BaseAPI {
 		});
 	}
 
-	public async generateApexSymbolTable(apexClasses: any) {
+	public async generateApexSymbolTable(apexClasses: string[]) {
 		return this.getApexClassesByNames(apexClasses)
 			.then((apexClasses) => {
 				console.log("classes = ", apexClasses);
@@ -110,32 +110,32 @@ class ToolingApi extends BaseAPI {
 				if (uncachedApexClasses.length === 0) {
 					return new Promise((resolve) => resolve(cachedApexClassMembers));
 				}
-				return this.createMetadataContainer().then((container: any) => {
+				return this.createMetadataContainer().then((container) => {
 					console.log("createMetadataContainer : ", container);
-					return this.createApexClassMember(uncachedApexClasses, container.id)
+					const containerId = container.id!;
+					return this.createApexClassMember(uncachedApexClasses, containerId)
 						.then(async (apexMembers) => {
 							console.log("apexMembers : ", apexMembers);
-							return this.createContainerAsyncRequest(container.id);
+							return this.createContainerAsyncRequest(containerId);
 						})
 						.then(async (asyncReq) => {
 							console.log("asyncReq : ", asyncReq);
-							return this.checkAsyncRequestResult(asyncReq);
+							return this.checkAsyncRequestResult({ id: asyncReq.id! });
 						})
-						.then(async (reqRes: any) => {
+						.then(async (reqRes) => {
 							if (reqRes.records[0]?.State === "Completed") {
-								return this.getApexClassMemberByAsyncReqId(container.id);
+								return this.getApexClassMemberByAsyncReqId(containerId);
 							} else {
 								console.error(reqRes);
 								console.error(reqRes.records);
 								throw Error("Generate Sybmol Table was Failed");
 							}
 						})
-						.then((apexClassMemberResult: any) => {
+						.then((apexClassMemberResult) => {
 							return new Promise(async (resolve) => {
-								const apexClassMembers: Array<ApexClassMember> =
-									apexClassMemberResult.records;
+								const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
 								this.saveToCache(apexClassMembers);
-								await this.deleteMetadataContainer([container.id]);
+								await this.deleteMetadataContainer([containerId]);
 								resolve([...cachedApexClassMembers, ...apexClassMembers]);
 							});
 						});
@@ -161,9 +161,9 @@ class ToolingApi extends BaseAPI {
 		return this.conn.tooling.query(query);
 	}
 
-	private async checkAsyncRequestResult(asyncReq: any) {
+	private async checkAsyncRequestResult(asyncReq: { id: string }) {
 		await this.sleep(2000);
-		let reqRes: any = await this.getContainerAsyncRequest(asyncReq.id);
+		let reqRes = await this.getContainerAsyncRequest(asyncReq.id);
 		console.log("reqRes : ", reqRes);
 		while (reqRes.records[0]?.State === "Queued") {
 			await this.sleep(2000);
@@ -202,7 +202,7 @@ class ToolingApi extends BaseAPI {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
-	private getApexMemberes(apexClasses: any, metadataContainerId: string) {
+	private getApexMemberes(apexClasses: ApexClass[], metadataContainerId: string) {
 		const apexMembers = [];
 		for (const apexClass of apexClasses) {
 			apexMembers.push({

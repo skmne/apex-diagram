@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { DiagrammModel } from "./DiagrammModel";
 
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
-	private data: any = { nodes: [], links: [] };
+	private data: DiagrammModel = { nodes: [], links: [] };
 	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel;
 
 	private constructor(context: vscode.ExtensionContext) {
@@ -20,7 +21,7 @@ export default class DiagramWorkspaceProvider {
 		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent(context);
 
 		this.diagramWorkspaceWebviewPanel.webview.onDidReceiveMessage(
-			async (message: any) => {
+			async (message: { command: string; text?: string }) => {
 				switch (
 					message.command // Handle messages from the webview
 				) {
@@ -34,9 +35,10 @@ export default class DiagramWorkspaceProvider {
 									Images: ["svg"],
 								},
 							})
-							.then((fileInfos: any) => {
+							.then((fileInfos: vscode.Uri | undefined) => {
+								if (!fileInfos) { return; }
 								console.log("try to write apex diagram here:", fileInfos);
-								fs.writeFileSync(fileInfos.fsPath, message.text);
+								fs.writeFileSync(fileInfos.fsPath, message.text ?? "");
 								vscode.window
 									.showInformationMessage(
 										`Apex diagram was successfully saved!`,
@@ -45,7 +47,7 @@ export default class DiagramWorkspaceProvider {
 									)
 									.then((selectedButton) => {
 										if (selectedButton === "Open") {
-											vscode.env.openExternal(fileInfos.fsPath); // Open the URI externally
+											vscode.env.openExternal(fileInfos); // Open the URI externally
 										}
 									});
 							});
@@ -79,15 +81,15 @@ export default class DiagramWorkspaceProvider {
 		return this.diagramWorkspaceWebviewPanel;
 	}
 
-	public getData(): any {
+	public getData(): DiagrammModel {
 		return this.data;
 	}
 
-	public setData(newData: string): void {
+	public setData(newData: DiagrammModel): void {
 		this.data = newData;
 	}
 
-	public addNodes(data: any): void {
+	public addNodes(data: DiagrammModel): void {
 		this.data.nodes = [...this.data.nodes, ...data.nodes]; // todo optimize - remove dublicate
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({
 			command: "Add",
@@ -95,12 +97,12 @@ export default class DiagramWorkspaceProvider {
 		});
 	}
 
-	public removeNodes(nodesIds: any[]): void {
-		this.data.nodes = this.data.nodes.filter((node: { id: any }) => !nodesIds.includes(node.id));
+	public removeNodes(nodesIds: string[]): void {
+		this.data.nodes = this.data.nodes.filter((node) => !nodesIds.includes(node.id ?? ""));
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodesIds });
 	}
 
-	public executeWebviewCommand(command: any, value: any) {
+	public executeWebviewCommand(command: string, value: unknown) {
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: command, value: value });
 	}
 
