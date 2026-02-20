@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { parseDependency, getUnloadedApexNames } from "../../dependencyAnalaizer";
+import { parseDependency, getUnloadedApexNames } from "../../dependencyAnalyzer";
 import { ApexClassMember } from "../../salesforceAPI/ApexClassMember";
 
 function createApexClassMember(

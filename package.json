@@ -107,7 +107,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src/",
     "test": "vscode-test",
-    "test:unit": "tsc -p ./ && mocha --ui tdd out/test/suite/node.test.js out/test/suite/link.test.js out/test/suite/dependencyAnalaizer.test.js"
+    "test:unit": "tsc -p ./ && mocha --ui tdd out/test/suite/node.test.js out/test/suite/link.test.js out/test/suite/dependencyAnalyzer.test.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",

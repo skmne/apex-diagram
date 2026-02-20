@@ -59,7 +59,7 @@ class ToolingApi extends BaseAPI {
 		return apexClasses;
 	}
 
-	public async getMeatadaContainerByName(name: string) {
+	public async getMetadataContainerByName(name: string) {
 		return this.query(`SELECT Id FROM MetadataContainer WHERE Name=\'${name}\'`);
 	}
 
@@ -82,7 +82,7 @@ class ToolingApi extends BaseAPI {
 	}
 
 	public async createApexClassMember(apexClasses: ApexClass[], metadataContainerId: string) {
-		const apexClassMembers = this.getApexMemberes(apexClasses, metadataContainerId);
+		const apexClassMembers = this.getApexMembers(apexClasses, metadataContainerId);
 		return this.conn.tooling.sobject("ApexClassMember").create(apexClassMembers);
 	}
 
@@ -128,7 +128,7 @@ class ToolingApi extends BaseAPI {
 							} else {
 								console.error(reqRes);
 								console.error(reqRes.records);
-								throw Error("Generate Sybmol Table was Failed");
+								throw Error("Generate Symbol Table Failed");
 							}
 						})
 						.then((apexClassMemberResult) => {
@@ -202,7 +202,7 @@ class ToolingApi extends BaseAPI {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
-	private getApexMemberes(apexClasses: ApexClass[], metadataContainerId: string) {
+	private getApexMembers(apexClasses: ApexClass[], metadataContainerId: string) {
 		const apexMembers = [];
 		for (const apexClass of apexClasses) {
 			apexMembers.push({

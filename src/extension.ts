@@ -6,7 +6,7 @@ import UserInfo from "./sfdx/UserInfo";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
-import { parseDependency } from "./dependencyAnalaizer";
+import { parseDependency } from "./dependencyAnalyzer";
 import { DiagrammModel } from "./DiagrammModel";
 
 export async function activate(context: vscode.ExtensionContext) {
