@@ -89,25 +89,17 @@ export default class DiagramWorkspaceProvider {
 	}
 
 	public addNodes(data: DiagrammModel): void {
-		const existingNodeIds = new Set(this.data.nodes.map((n) => n.id));
-		const newNodes = data.nodes.filter((n) => !existingNodeIds.has(n.id));
-
-		const existingLinkKeys = new Set(this.data.links.map((l) => `${l.source}→${l.target}`));
-		const newLinks = data.links.filter((l) => !existingLinkKeys.has(`${l.source}→${l.target}`));
-
+		const existingIds = new Set(this.data.nodes.map((n) => n.id));
+		const newNodes = data.nodes.filter((n) => !existingIds.has(n.id));
 		this.data.nodes = [...this.data.nodes, ...newNodes];
-		this.data.links = [...this.data.links, ...newLinks];
-
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({
 			command: "Add",
-			value: { nodes: newNodes, links: newLinks },
+			value: data,
 		});
 	}
 
 	public removeNodes(nodesIds: string[]): void {
-		const removed = new Set(nodesIds);
 		this.data.nodes = this.data.nodes.filter((node) => !nodesIds.includes(node.id ?? ""));
-		this.data.links = this.data.links.filter((l) => !removed.has(String(l.source)) && !removed.has(String(l.target)));
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodesIds });
 	}
 

@@ -114,8 +114,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		const newData = new DiagrammModel();
 		newData.nodes = selectedNodes;
 
-		const allNodes = [...diagramWorkspace.getData().nodes, ...selectedNodes];
-		const apexClassNames = allNodes.map((node) => node.name);
+		const currentData = diagramWorkspace.getData();
+		currentData.nodes = [...currentData.nodes, ...selectedNodes];
+
+		const apexClassNames = currentData.nodes.map((node) => node.name);
 		if (apexClassNames.length > 1) {
 			const apexClassMembers = await tooling.generateApexSymbolTable(apexClassNames as string[]) as ApexClassMember[];
 			progress.report({ message: "Analyzing Dependencies" });
