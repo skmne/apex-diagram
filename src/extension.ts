@@ -19,20 +19,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		throw Error("Salesforce project was not found");
 	}
 
-	// vscode.window.withProgress(
-	// 	{
-	// 		location: vscode.ProgressLocation.Notification,
-	// 		title: "Apex Diagram",
-	// 	},
-	// 	async (progress) => {
-
-	// 	}
-
-	// progress.report({ message: "Authenticate with Salesforce" });
 	vscode.window.showInformationMessage("Authenticate with Salesforce");
 	const userInfo: UserInfo = await getSalesforceUserInfo(rootPath);
 	const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken, context.workspaceState);
-	// progress.report({ message: "Retrieve Apex classes" });
 	vscode.window.showInformationMessage("Retrieve Apex classes");
 	const apexClasses: ApexClass[] = await tooling.getApexClasses();
 
@@ -86,7 +75,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			node.contextValue = "add_context";
 		});
 		const nodeIds = selectedNodes.map((item: ApexClassTreeItem) => item.id);
-		// apexClassesTreeProvider.refreshItems(selectedNodes);
 		activeApexClassesTreeProvider.remove(nodeIds);
 		apexClassesTreeProvider.add(selectedNodes);
 
