@@ -4,6 +4,14 @@ import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { Memento } from "vscode";
 
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_MAX_SIZE = 100; // max entries per org
+
+interface CacheEntry {
+	member: ApexClassMember;
+	cachedAt: number; // Unix timestamp ms
+}
+
 class BaseAPI {
 	protected baseUrl: string;
 	protected accessToken: string;
@@ -23,7 +31,7 @@ class BaseAPI {
 }
 
 class ToolingApi extends BaseAPI {
-	cacheState: Memento;
+	private cacheState: Memento;
 	constructor(instanceUrl: string, accessToken: string, workspaceState: Memento) {
 		super(instanceUrl, accessToken);
 		this.cacheState = workspaceState;
@@ -161,19 +169,23 @@ class ToolingApi extends BaseAPI {
 	}
 
 	private saveToCache(apexClassMembers: ApexClassMember[]) {
+		this.evictIfOverLimit(apexClassMembers.length);
 		for (const item of apexClassMembers) {
-			const cacheKey = `${item.SymbolTable.name}`;
-			this.cacheState.update(cacheKey, item);
+			const cacheKey = `${this.instanceUrl}:${item.SymbolTable.name}`;
+			const entry: CacheEntry = { member: item, cachedAt: Date.now() };
+			this.cacheState.update(cacheKey, entry);
 		}
 	}
 
 	private getCachedApexClassMembers(apexClasses: ApexClass[]): ApexClassMember[] {
 		const cachedMembers: ApexClassMember[] = [];
 		for (const apexClass of apexClasses) {
-			const cacheKey = `${apexClass.Name}`; //${apexClass.LastModifiedDate}
-			const apexClassMemberFromCache: ApexClassMember | undefined = this.cacheState.get(cacheKey);
-			if (apexClassMemberFromCache?.LastSyncDate === apexClass.LastModifiedDate) {
-				cachedMembers.push(apexClassMemberFromCache);
+			const cacheKey = `${this.instanceUrl}:${apexClass.Name}`;
+			const entry: CacheEntry | undefined = this.cacheState.get(cacheKey);
+			if (!entry?.cachedAt) { continue; } // missing or old format — treat as miss
+			if (Date.now() - entry.cachedAt > CACHE_TTL_MS) { continue; } // expired
+			if (entry.member.LastSyncDate === apexClass.LastModifiedDate) {
+				cachedMembers.push(entry.member);
 			}
 		}
 		return cachedMembers;
@@ -181,10 +193,25 @@ class ToolingApi extends BaseAPI {
 
 	private getUncachedApexClasses(apexClasses: ApexClass[]): ApexClass[] {
 		return apexClasses.filter((apexClass) => {
-			const cacheKey = `${apexClass.Name}`;
-			const apexClassMemberFromCache: ApexClassMember | undefined = this.cacheState.get(cacheKey);
-			return !(apexClassMemberFromCache?.LastSyncDate === apexClass.LastModifiedDate);
+			const cacheKey = `${this.instanceUrl}:${apexClass.Name}`;
+			const entry: CacheEntry | undefined = this.cacheState.get(cacheKey);
+			if (!entry?.cachedAt) { return true; } // missing or old format
+			if (Date.now() - entry.cachedAt > CACHE_TTL_MS) { return true; } // expired
+			return !(entry.member.LastSyncDate === apexClass.LastModifiedDate);
 		});
+	}
+
+	private evictIfOverLimit(incomingCount: number) {
+		const orgPrefix = `${this.instanceUrl}:`;
+		const orgKeys = this.cacheState.keys().filter((k) => k.startsWith(orgPrefix));
+		const toEvict = orgKeys.length + incomingCount - CACHE_MAX_SIZE;
+		if (toEvict <= 0) { return; }
+
+		orgKeys
+			.map((key) => ({ key, cachedAt: (this.cacheState.get(key) as CacheEntry | undefined)?.cachedAt ?? 0 }))
+			.sort((a, b) => a.cachedAt - b.cachedAt)
+			.slice(0, toEvict)
+			.forEach(({ key }) => this.cacheState.update(key, undefined));
 	}
 
 	private sleep(ms: number) {
