@@ -2,48 +2,55 @@ import { DiagrammModel } from "./DiagrammModel";
 import { Link } from "./Link";
 import Node from "./Node";
 import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
-import { ExternalReference } from "./salesforceAPI/ExternalReference";
 import { SymbolTable } from "./salesforceAPI/SymbolTable";
 
-//todo refactor this method to separate on small pieces
-function parseDependency(apexClassMembers: Array<ApexClassMember>) {
-	const keyToSymbolTableMap = apexClassMembers.reduce((previousValue: Record<string, { key: string; symbolTable: SymbolTable }>, currentValue) => {
-		const key: string = getKey(currentValue.SymbolTable.namespace, currentValue.SymbolTable.name);
-		previousValue[key] = {
-			key: key,
-			symbolTable: currentValue.SymbolTable,
-		};
+type KeyMap = Record<string, { key: string; symbolTable: SymbolTable }>;
 
-		return previousValue;
+function buildKeyMap(apexClassMembers: Array<ApexClassMember>): KeyMap {
+	return apexClassMembers.reduce((map: KeyMap, member) => {
+		const key = getKey(member.SymbolTable.namespace, member.SymbolTable.name);
+		map[key] = { key, symbolTable: member.SymbolTable };
+		return map;
 	}, {});
-	const diagrammModel: DiagrammModel = new DiagrammModel();
+}
 
-	apexClassMembers.forEach((item: ApexClassMember) => {
-		diagrammModel.nodes.push(new Node(item.SymbolTable.namespace, item.SymbolTable.name));
-		// parent class
-		if (item.SymbolTable.parentClass) {
-			const refObject = keyToSymbolTableMap[item.SymbolTable.parentClass];
-			if (refObject) {
-				diagrammModel.links.push(new Link(item.SymbolTable.name, refObject.key, "Inheritance"));
-			}
+function collectLinks(symbolTable: SymbolTable, keyMap: KeyMap): Link[] {
+	const links: Link[] = [];
+
+	if (symbolTable.parentClass) {
+		const ref = keyMap[symbolTable.parentClass];
+		if (ref) {
+			links.push(new Link(symbolTable.name, ref.key, "Inheritance"));
 		}
+	}
 
-		//interfaces
-		item.SymbolTable.interfaces.forEach((interfaceName: string) => {
-			const refObject = keyToSymbolTableMap[interfaceName];
-			if (refObject) {
-				diagrammModel.links.push(new Link(item.SymbolTable.name, refObject.key, "Realization"));
-			}
-		});
+	for (const interfaceName of symbolTable.interfaces) {
+		const ref = keyMap[interfaceName];
+		if (ref) {
+			links.push(new Link(symbolTable.name, ref.key, "Realization"));
+		}
+	}
 
-		item.SymbolTable.externalReferences.forEach((externalReference: ExternalReference) => {
-			const refObject = keyToSymbolTableMap[getKey(externalReference.namespace, externalReference.name)];
-			if (refObject) {
-				diagrammModel.links.push(new Link(item.SymbolTable.name, refObject.key));
-			}
-		});
-	});
-	return diagrammModel;
+	for (const externalRef of symbolTable.externalReferences) {
+		const ref = keyMap[getKey(externalRef.namespace, externalRef.name)];
+		if (ref) {
+			links.push(new Link(symbolTable.name, ref.key));
+		}
+	}
+
+	return links;
+}
+
+function parseDependency(apexClassMembers: Array<ApexClassMember>): DiagrammModel {
+	const keyMap = buildKeyMap(apexClassMembers);
+	const model = new DiagrammModel();
+
+	for (const item of apexClassMembers) {
+		model.nodes.push(new Node(item.SymbolTable.namespace, item.SymbolTable.name));
+		model.links.push(...collectLinks(item.SymbolTable, keyMap));
+	}
+
+	return model;
 }
 
 function getKey(namespace?: string, name?: string) {
@@ -62,19 +69,18 @@ function getUnloadedApexNames(
 			unloadedClassNames.push(apexMember.SymbolTable.parentClass);
 		}
 		if (apexMember.SymbolTable.interfaces.length > 0) {
-			const filteredInterface = apexMember.SymbolTable.interfaces.filter(
+			const filteredInterfaces = apexMember.SymbolTable.interfaces.filter(
 				(item: string) => !loadedClassNames.includes(item)
 			);
-			if (filteredInterface.length > 0) {
-				unloadedClassNames.push(...filteredInterface);
+			if (filteredInterfaces.length > 0) {
+				unloadedClassNames.push(...filteredInterfaces);
 			}
 		}
-		let exteranlRef: string[] = apexMember.SymbolTable.externalReferences.map((item) => {
-			return item.name;
-		});
-		exteranlRef = exteranlRef.filter((item: string) => !loadedClassNames.includes(item));
-		if (exteranlRef.length > 0) {
-			unloadedClassNames.push(...exteranlRef);
+		const externalRefs = apexMember.SymbolTable.externalReferences
+			.map((item) => item.name)
+			.filter((item: string) => !loadedClassNames.includes(item));
+		if (externalRefs.length > 0) {
+			unloadedClassNames.push(...externalRefs);
 		}
 	}
 

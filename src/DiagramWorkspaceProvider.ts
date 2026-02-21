@@ -89,7 +89,9 @@ export default class DiagramWorkspaceProvider {
 	}
 
 	public addNodes(data: DiagrammModel): void {
-		this.data.nodes = [...this.data.nodes, ...data.nodes]; // todo optimize - remove dublicate
+		const existingIds = new Set(this.data.nodes.map((n) => n.id));
+		const newNodes = data.nodes.filter((n) => !existingIds.has(n.id));
+		this.data.nodes = [...this.data.nodes, ...newNodes];
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({
 			command: "Add",
 			value: data,

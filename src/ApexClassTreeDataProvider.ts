@@ -71,20 +71,16 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 		this.apexClassTreeItems.sort(this.sortByName);
 		return Promise.resolve(this.apexClassTreeItems);
 	}
-	//todo refactoring
 	private getApexClassTreeItems(): ApexClassTreeItem[] {
-		const apexClassTreeItems = [];
-		for (const apexClass of this.apexClassMembers) {
-			apexClassTreeItems.push(
+		return this.apexClassMembers.map(
+			(apexClass) =>
 				new ApexClassTreeItem(
 					apexClass.NamespacePrefix,
 					apexClass.Name,
 					apexClass.ApiVersion ?? "",
 					vscode.TreeItemCollapsibleState.None
 				)
-			);
-		}
-		return apexClassTreeItems;
+		);
 	}
 }
 
