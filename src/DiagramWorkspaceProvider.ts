@@ -37,7 +37,6 @@ export default class DiagramWorkspaceProvider {
 							})
 							.then((fileInfos: vscode.Uri | undefined) => {
 								if (!fileInfos) { return; }
-								console.log("try to write apex diagram here:", fileInfos);
 								fs.writeFileSync(fileInfos.fsPath, message.text ?? "");
 								vscode.window
 									.showInformationMessage(
@@ -110,7 +109,13 @@ export default class DiagramWorkspaceProvider {
 		const pathToHtmlTemplate = path.join(context.extensionPath, "./web/diagram-workspace/index.html");
 		const pathToBundle = path.join(context.extensionPath, "./dist/webview/bundle.js");
 
-		let html = fs.readFileSync(pathToHtmlTemplate).toString();
+		let html: string;
+		try {
+			html = fs.readFileSync(pathToHtmlTemplate).toString();
+		} catch {
+			vscode.window.showErrorMessage("Apex Diagram: Failed to load webview template.");
+			return "";
+		}
 
 		// Replace bundle.js path with webview URI
 		const bundleUri = this.diagramWorkspaceWebviewPanel.webview.asWebviewUri(
@@ -123,6 +128,5 @@ export default class DiagramWorkspaceProvider {
 
 	private destroy(): void {
 		DiagramWorkspaceProvider.instance = null;
-		console.log("**** destroy ****");
 	}
 }

@@ -48,7 +48,22 @@ export async function activate(context: vscode.ExtensionContext) {
 		canSelectMany: true,
 	});
 
-	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => apexClassesTreeProvider.refresh()); //todo add refresh logic
+	vscode.commands.registerCommand("apex-classes-view.refreshEntry", () => {
+		vscode.window.withProgress(
+			{ location: vscode.ProgressLocation.Notification, title: "Apex Diagram" },
+			async (progress) => {
+				progress.report({ message: "Refreshing Apex classes" });
+				const freshApexClasses = await tooling.getApexClasses();
+				const activeIds = new Set(activeApexClassesTreeProvider.getItemIds());
+				apexClassesTreeProvider.updateApexClasses(
+					freshApexClasses.filter((c) => {
+						const id = c.NamespacePrefix ? c.NamespacePrefix + "." + c.Name : c.Name;
+						return !activeIds.has(id);
+					})
+				);
+			}
+		);
+	});
 
 	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 		vscode.window.withProgress(
@@ -98,7 +113,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			selectedNodes = [node];
 		}
 		progress.report({ message: "Receiving Apex Classes Details" });
-		console.log("selected nodes", selectedNodes);
 
 		selectedNodes.forEach((node: ApexClassTreeItem) => {
 			node.contextValue = "remove_context";
@@ -116,14 +130,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		currentData.nodes = [...currentData.nodes, ...selectedNodes];
 
 		const apexClassNames = currentData.nodes.map((node) => node.name);
-		console.log(apexClassNames);
 		if (apexClassNames.length > 1) {
 			const apexClassMembers = await tooling.generateApexSymbolTable(apexClassNames as string[]) as ApexClassMember[];
 			progress.report({ message: "Analyzing Dependencies" });
 			const dependencyData = parseDependency(apexClassMembers);
 
 			newData.links = dependencyData.links;
-			console.log("Dependency  = ", dependencyData);
 		}
 		diagramWorkspace.addNodes(newData);
 		vscode.window.showInformationMessage(

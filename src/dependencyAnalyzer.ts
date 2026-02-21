@@ -7,7 +7,6 @@ import { SymbolTable } from "./salesforceAPI/SymbolTable";
 
 //todo refactor this method to separate on small pieces
 function parseDependency(apexClassMembers: Array<ApexClassMember>) {
-	console.log("input data", apexClassMembers);
 	const keyToSymbolTableMap = apexClassMembers.reduce((previousValue: Record<string, { key: string; symbolTable: SymbolTable }>, currentValue) => {
 		const key: string = getKey(currentValue.SymbolTable.namespace, currentValue.SymbolTable.name);
 		previousValue[key] = {

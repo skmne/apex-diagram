@@ -24,11 +24,20 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 
 	remove(nodeIds: string[]): void {
 		this.apexClassTreeItems = this.apexClassTreeItems.filter((item) => !nodeIds.includes(item.id));
-		console.log("remove items", this.apexClassTreeItems);
-		// this.refreshItems(this.apexClassTreeItems);
 		this.refresh();
 	}
-	sortByName(a: ApexClassTreeItem, b: ApexClassTreeItem) {
+
+	updateApexClasses(apexClasses: ApexClass[]): void {
+		this.apexClassMembers = apexClasses;
+		this.apexClassTreeItems = [];
+		this.refresh();
+	}
+
+	getItemIds(): string[] {
+		return this.apexClassTreeItems.map((item) => item.id);
+	}
+
+	private sortByName(a: ApexClassTreeItem, b: ApexClassTreeItem) {
 		const nameA = a.name.toUpperCase(); // ignore upper and lowercase
 		const nameB = b.name.toUpperCase(); // ignore upper and lowercase
 		if (nameA < nameB) {

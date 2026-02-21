@@ -77,7 +77,6 @@ class ToolingApi extends BaseAPI {
 		const container = {
 			Name: "Apex Diagram:" + new Date().valueOf(),
 		};
-		console.log("container = ", container);
 		return this.conn.tooling.sobject("MetadataContainer").create(container);
 	}
 
@@ -96,38 +95,29 @@ class ToolingApi extends BaseAPI {
 	public async generateApexSymbolTable(apexClasses: string[]) {
 		return this.getApexClassesByNames(apexClasses)
 			.then((apexClasses) => {
-				console.log("classes = ", apexClasses);
 				if (!apexClasses || apexClasses.length === 0) {
 					return new Promise((resolve) => resolve(apexClasses));
 				}
-				console.log("apexClasses : ", apexClasses);
 
 				const cachedApexClassMembers = this.getCachedApexClassMembers(apexClasses);
 				const uncachedApexClasses = this.getUncachedApexClasses(apexClasses);
-				console.log("FROM CASH ===", cachedApexClassMembers);
-				console.log("New ===", uncachedApexClasses);
 
 				if (uncachedApexClasses.length === 0) {
 					return new Promise((resolve) => resolve(cachedApexClassMembers));
 				}
 				return this.createMetadataContainer().then((container) => {
-					console.log("createMetadataContainer : ", container);
 					const containerId = container.id!;
 					return this.createApexClassMember(uncachedApexClasses, containerId)
-						.then(async (apexMembers) => {
-							console.log("apexMembers : ", apexMembers);
+						.then(async () => {
 							return this.createContainerAsyncRequest(containerId);
 						})
 						.then(async (asyncReq) => {
-							console.log("asyncReq : ", asyncReq);
 							return this.checkAsyncRequestResult({ id: asyncReq.id! });
 						})
 						.then(async (reqRes) => {
 							if (reqRes.records[0]?.State === "Completed") {
 								return this.getApexClassMemberByAsyncReqId(containerId);
 							} else {
-								console.error(reqRes);
-								console.error(reqRes.records);
 								throw Error("Generate Symbol Table Failed");
 							}
 						})
@@ -142,7 +132,6 @@ class ToolingApi extends BaseAPI {
 				});
 			})
 			.catch((err) => {
-				console.error(err);
 				throw err;
 			});
 	}
@@ -164,32 +153,32 @@ class ToolingApi extends BaseAPI {
 	private async checkAsyncRequestResult(asyncReq: { id: string }) {
 		await this.sleep(2000);
 		let reqRes = await this.getContainerAsyncRequest(asyncReq.id);
-		console.log("reqRes : ", reqRes);
 		while (reqRes.records[0]?.State === "Queued") {
 			await this.sleep(2000);
 			reqRes = await this.getContainerAsyncRequest(asyncReq.id);
-			console.log("interval reqRes : ", reqRes);
 		}
 		return reqRes;
 	}
+
 	private saveToCache(apexClassMembers: ApexClassMember[]) {
 		for (const item of apexClassMembers) {
 			const cacheKey = `${item.SymbolTable.name}`;
 			this.cacheState.update(cacheKey, item);
 		}
 	}
+
 	private getCachedApexClassMembers(apexClasses: ApexClass[]): ApexClassMember[] {
 		const cachedMembers: ApexClassMember[] = [];
 		for (const apexClass of apexClasses) {
 			const cacheKey = `${apexClass.Name}`; //${apexClass.LastModifiedDate}
 			const apexClassMemberFromCache: ApexClassMember | undefined = this.cacheState.get(cacheKey);
-			console.log("apexClassMemberFromCache = ", apexClassMemberFromCache);
 			if (apexClassMemberFromCache?.LastSyncDate === apexClass.LastModifiedDate) {
 				cachedMembers.push(apexClassMemberFromCache);
 			}
 		}
 		return cachedMembers;
 	}
+
 	private getUncachedApexClasses(apexClasses: ApexClass[]): ApexClass[] {
 		return apexClasses.filter((apexClass) => {
 			const cacheKey = `${apexClass.Name}`;
