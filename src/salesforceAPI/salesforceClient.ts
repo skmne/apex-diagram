@@ -4,6 +4,17 @@ import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { Memento } from "vscode";
 
+const SALESFORCE_API_VERSION = "66.0";
+const MAX_COMPOSITE_SUBREQUESTS = 25;
+
+type CompositeResponse = {
+	compositeResponse: Array<{
+		body?: { id?: string; success?: boolean; errors?: unknown[] } | unknown;
+		httpStatusCode: number;
+		referenceId: string;
+	}>;
+};
+
 class BaseAPI {
 	protected baseUrl: string;
 	protected accessToken: string;
@@ -12,12 +23,13 @@ class BaseAPI {
 
 	constructor(instanceUrl: string, accessToken: string) {
 		this.instanceUrl = instanceUrl;
-		this.baseUrl = instanceUrl + "/services/data/v54.0";
+		this.baseUrl = `${instanceUrl}/services/data/v${SALESFORCE_API_VERSION}`;
 		this.accessToken = accessToken;
 
 		this.conn = new Connection({
 			instanceUrl: this.instanceUrl,
 			accessToken: this.accessToken,
+			version: SALESFORCE_API_VERSION,
 		});
 	}
 }
@@ -70,7 +82,11 @@ class ToolingApi extends BaseAPI {
 	}
 
 	public async deleteMetadataContainer(metadataContainerIds: Array<string>) {
-		return this.conn.tooling.sobject("MetadataContainer").destroy(metadataContainerIds);
+		return Promise.all(
+			metadataContainerIds.map((metadataContainerId) =>
+				this.conn.tooling.sobject("MetadataContainer").destroy(metadataContainerId)
+			)
+		);
 	}
 
 	public async createMetadataContainer() {
@@ -82,7 +98,16 @@ class ToolingApi extends BaseAPI {
 
 	public async createApexClassMember(apexClasses: ApexClass[], metadataContainerId: string) {
 		const apexClassMembers = this.getApexMembers(apexClasses, metadataContainerId);
-		return this.conn.tooling.sobject("ApexClassMember").create(apexClassMembers);
+		const results = [];
+
+		for (let i = 0; i < apexClassMembers.length; i += MAX_COMPOSITE_SUBREQUESTS) {
+			const chunk = apexClassMembers.slice(i, i + MAX_COMPOSITE_SUBREQUESTS);
+			const response = await this.createApexClassMembersComposite(chunk, i);
+			this.assertCompositeSuccess(response);
+			results.push(...response.compositeResponse);
+		}
+
+		return results;
 	}
 
 	public async createContainerAsyncRequest(containerId: string) {
@@ -125,7 +150,9 @@ class ToolingApi extends BaseAPI {
 							return new Promise(async (resolve) => {
 								const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
 								this.saveToCache(apexClassMembers);
-								await this.deleteMetadataContainer([containerId]);
+								await this.deleteMetadataContainer([containerId]).catch((err) => {
+									console.warn("Apex Diagram: Failed to delete metadata container", err);
+								});
 								resolve([...cachedApexClassMembers, ...apexClassMembers]);
 							});
 						});
@@ -148,6 +175,32 @@ class ToolingApi extends BaseAPI {
 
 	private async query(query: string) {
 		return this.conn.tooling.query(query);
+	}
+
+	private async createApexClassMembersComposite(apexClassMembers: unknown[], offset: number): Promise<CompositeResponse> {
+		return this.conn.request<CompositeResponse>({
+			method: "POST",
+			url: `${this.baseUrl}/composite`,
+			body: JSON.stringify({
+				allOrNone: true,
+				compositeRequest: apexClassMembers.map((apexClassMember, index) => ({
+					method: "POST",
+					url: `/services/data/v${SALESFORCE_API_VERSION}/tooling/sobjects/ApexClassMember/`,
+					referenceId: `apexClassMember_${offset + index}`,
+					body: apexClassMember,
+				})),
+			}),
+			headers: {
+				"content-type": "application/json",
+			},
+		});
+	}
+
+	private assertCompositeSuccess(response: CompositeResponse) {
+		const failedResponse = response.compositeResponse.find((item) => item.httpStatusCode >= 300);
+		if (failedResponse) {
+			throw Error(`Create ApexClassMember Failed: ${JSON.stringify(failedResponse.body)}`);
+		}
 	}
 
 	private async checkAsyncRequestResult(asyncReq: { id: string }) {

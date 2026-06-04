@@ -61,6 +61,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "apex-classes-view.clearCache",
+        "title": "Clear Cache",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "apex-classes-view.addEntry",
         "title": "Add",
         "icon": "$(add)"
@@ -80,6 +85,11 @@
         },
         {
           "command": "apex-classes-view.openWorkspace",
+          "when": "view == apex-classes-view",
+          "group": "navigation"
+        },
+        {
+          "command": "apex-classes-view.clearCache",
           "when": "view == apex-classes-view",
           "group": "navigation"
         }

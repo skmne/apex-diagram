@@ -54,6 +54,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		);
 	});
 
+	vscode.commands.registerCommand("apex-classes-view.clearCache", async () => {
+		await clearSymbolTableCache(context);
+		vscode.window.showInformationMessage("Apex Diagram symbol table cache cleared.");
+	});
+
 	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 		vscode.window.withProgress(
 			{
@@ -130,6 +135,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			`Successfully add ${selectedNodes.length} Apex class${selectedNodes.length > 1 ? "es" : ""}`
 		);
 	}
+}
+
+async function clearSymbolTableCache(context: vscode.ExtensionContext) {
+	await Promise.all(context.workspaceState.keys().map((key) => context.workspaceState.update(key, undefined)));
 }
 
 export function deactivate() {}
