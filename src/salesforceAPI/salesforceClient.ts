@@ -1,11 +1,21 @@
 import { Connection } from "jsforce";
+import * as crypto from "crypto";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
-import { Memento } from "vscode";
+import { Memento, Uri } from "vscode";
 
 const SALESFORCE_API_VERSION = "66.0";
 const MAX_COMPOSITE_SUBREQUESTS = 25;
+const SYMBOL_TABLE_CACHE_KEY_PREFIX = "apexDiagram.symbolTableIndex";
+const SYMBOL_TABLE_CACHE_DIR = "apexdiagram/symbol-table-cache";
+
+type SymbolTableCacheEntry = {
+	filePath: string;
+	lastSyncDate: string;
+};
 
 type CompositeResponse = {
 	compositeResponse: Array<{
@@ -36,9 +46,14 @@ class BaseAPI {
 
 class ToolingApi extends BaseAPI {
 	cacheState: Memento;
-	constructor(instanceUrl: string, accessToken: string, workspaceState: Memento) {
+	private symbolTableCacheRootPath: string;
+	private orgCacheHash: string;
+
+	constructor(instanceUrl: string, accessToken: string, workspaceState: Memento, storageUri: Uri) {
 		super(instanceUrl, accessToken);
 		this.cacheState = workspaceState;
+		this.orgCacheHash = this.hash(this.instanceUrl);
+		this.symbolTableCacheRootPath = path.join(storageUri.fsPath, SYMBOL_TABLE_CACHE_DIR, this.orgCacheHash);
 		this.baseUrl += "/tooling";
 	}
 
@@ -57,7 +72,7 @@ class ToolingApi extends BaseAPI {
 
 	public async getApexClassesByNames(apexClassNames: string[]) {
 		let query = `
-    		SELECT Id, Name , Body, LastModifiedDate
+    		SELECT Id, NamespacePrefix, Name, Body, LastModifiedDate
    		 	FROM ApexClass
     	`;
 
@@ -119,13 +134,12 @@ class ToolingApi extends BaseAPI {
 
 	public async generateApexSymbolTable(apexClasses: string[]) {
 		return this.getApexClassesByNames(apexClasses)
-			.then((apexClasses) => {
+			.then(async (apexClasses) => {
 				if (!apexClasses || apexClasses.length === 0) {
 					return new Promise((resolve) => resolve(apexClasses));
 				}
 
-				const cachedApexClassMembers = this.getCachedApexClassMembers(apexClasses);
-				const uncachedApexClasses = this.getUncachedApexClasses(apexClasses);
+				const { cachedApexClassMembers, uncachedApexClasses } = await this.getCachedAndUncachedApexClasses(apexClasses);
 
 				if (uncachedApexClasses.length === 0) {
 					return new Promise((resolve) => resolve(cachedApexClassMembers));
@@ -146,10 +160,10 @@ class ToolingApi extends BaseAPI {
 								throw Error("Generate Symbol Table Failed");
 							}
 						})
-						.then((apexClassMemberResult) => {
+						.then(async (apexClassMemberResult) => {
 							return new Promise(async (resolve) => {
 								const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
-								this.saveToCache(apexClassMembers);
+								await this.saveToCache(apexClassMembers);
 								await this.deleteMetadataContainer([containerId]).catch((err) => {
 									console.warn("Apex Diagram: Failed to delete metadata container", err);
 								});
@@ -213,31 +227,88 @@ class ToolingApi extends BaseAPI {
 		return reqRes;
 	}
 
-	private saveToCache(apexClassMembers: ApexClassMember[]) {
+	private async saveToCache(apexClassMembers: ApexClassMember[]) {
+		await fs.mkdir(this.symbolTableCacheRootPath, { recursive: true });
+
 		for (const item of apexClassMembers) {
-			const cacheKey = `${item.SymbolTable.name}`;
-			this.cacheState.update(cacheKey, item);
+			if (!item.SymbolTable.name) {
+				continue;
+			}
+			const classKey = this.getClassCacheKey(item.SymbolTable.namespace, item.SymbolTable.name);
+			const cacheKey = this.getSymbolTableCacheKey(classKey);
+			const filePath = this.getSymbolTableCacheFilePath(classKey);
+			await fs.writeFile(filePath, JSON.stringify(item), "utf8");
+			await this.cacheState.update(cacheKey, {
+				filePath,
+				lastSyncDate: String(item.LastSyncDate),
+			} satisfies SymbolTableCacheEntry);
 		}
 	}
 
-	private getCachedApexClassMembers(apexClasses: ApexClass[]): ApexClassMember[] {
-		const cachedMembers: ApexClassMember[] = [];
+	private async getCachedAndUncachedApexClasses(apexClasses: ApexClass[]): Promise<{
+		cachedApexClassMembers: ApexClassMember[];
+		uncachedApexClasses: ApexClass[];
+	}> {
+		const cachedApexClassMembers: ApexClassMember[] = [];
+		const uncachedApexClasses: ApexClass[] = [];
+
 		for (const apexClass of apexClasses) {
-			const cacheKey = `${apexClass.Name}`; //${apexClass.LastModifiedDate}
-			const apexClassMemberFromCache: ApexClassMember | undefined = this.cacheState.get(cacheKey);
-			if (apexClassMemberFromCache?.LastSyncDate === apexClass.LastModifiedDate) {
-				cachedMembers.push(apexClassMemberFromCache);
+			const cacheEntry = this.getCacheEntry(apexClass);
+			if (!this.hasUpToDateSymbolTableCache(cacheEntry, apexClass)) {
+				uncachedApexClasses.push(apexClass);
+				continue;
+			}
+
+			const cachedMember = await this.readApexClassMemberFromCache(cacheEntry!.filePath);
+			if (cachedMember) {
+				cachedApexClassMembers.push(cachedMember);
+			} else {
+				uncachedApexClasses.push(apexClass);
 			}
 		}
-		return cachedMembers;
+
+		return { cachedApexClassMembers, uncachedApexClasses };
 	}
 
-	private getUncachedApexClasses(apexClasses: ApexClass[]): ApexClass[] {
-		return apexClasses.filter((apexClass) => {
-			const cacheKey = `${apexClass.Name}`;
-			const apexClassMemberFromCache: ApexClassMember | undefined = this.cacheState.get(cacheKey);
-			return !(apexClassMemberFromCache?.LastSyncDate === apexClass.LastModifiedDate);
-		});
+	private getCacheEntry(apexClass: ApexClass): SymbolTableCacheEntry | undefined {
+		const classKey = this.getClassCacheKey(apexClass.NamespacePrefix, apexClass.Name);
+		return this.cacheState.get<SymbolTableCacheEntry>(this.getSymbolTableCacheKey(classKey));
+	}
+
+	private hasUpToDateSymbolTableCache(cacheEntry: SymbolTableCacheEntry | undefined, apexClass: ApexClass): boolean {
+		if (!cacheEntry?.filePath) {
+			return false;
+		}
+
+		const cachedLastSyncMs = new Date(cacheEntry.lastSyncDate).getTime();
+		const apexLastModifiedMs = new Date(apexClass.LastModifiedDate).getTime();
+
+		return cachedLastSyncMs === apexLastModifiedMs;
+	}
+
+	private async readApexClassMemberFromCache(filePath: string): Promise<ApexClassMember | undefined> {
+		try {
+			return JSON.parse(await fs.readFile(filePath, "utf8")) as ApexClassMember;
+		} catch {
+			return undefined;
+		}
+	}
+
+	private getClassCacheKey(namespace: string | undefined, name: string): string {
+		const classKey = namespace ? `${namespace}.${name}` : name;
+		return classKey;
+	}
+
+	private getSymbolTableCacheKey(classKey: string): string {
+		return `${SYMBOL_TABLE_CACHE_KEY_PREFIX}:${this.orgCacheHash}:${classKey}`;
+	}
+
+	private getSymbolTableCacheFilePath(classKey: string): string {
+		return path.join(this.symbolTableCacheRootPath, `${this.hash(classKey)}.json`);
+	}
+
+	private hash(value: string): string {
+		return crypto.createHash("sha256").update(value).digest("hex");
 	}
 
 	private sleep(ms: number) {
@@ -257,4 +328,4 @@ class ToolingApi extends BaseAPI {
 		return apexMembers;
 	}
 }
-export { ToolingApi };
+export { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX, ToolingApi };

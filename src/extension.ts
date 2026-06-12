@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { ApexClassTreeDataProvider, ApexClassTreeItem } from "./ApexClassTreeDataProvider";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
 import { getSalesforceUserInfo } from "./sfdx/sfdx";
-import { ToolingApi } from "./salesforceAPI/salesforceClient";
+import { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX, ToolingApi } from "./salesforceAPI/salesforceClient";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 import { parseDependency } from "./dependencyAnalyzer";
@@ -25,7 +25,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		async (progress) => {
 			progress.report({ message: "Connecting to Salesforce..." });
 			const userInfo = await getSalesforceUserInfo(rootPath);
-			const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken, context.workspaceState);
+			const tooling = new ToolingApi(
+				userInfo.instanceUrl,
+				userInfo.accessToken,
+				context.workspaceState,
+				context.storageUri ?? context.globalStorageUri
+			);
 
 			progress.report({ message: "Loading Apex classes..." });
 			const apexClasses: ApexClass[] = await tooling.getApexClasses();
@@ -65,7 +70,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.commands.registerCommand("apex-classes-view.clearCache", async () => {
-		await clearSymbolTableCache(context);
+		await vscode.window.withProgress(
+			{ location: vscode.ProgressLocation.Notification, title: "Apex Diagram" },
+			async (progress) => {
+				progress.report({ message: "Clearing symbol table cache..." });
+				const clearedCacheItems = await clearSymbolTableCache(context, progress);
+				vscode.window.showInformationMessage(
+					`Apex Diagram cache cleared. Removed ${clearedCacheItems} cache index item${clearedCacheItems === 1 ? "" : "s"}.`
+				);
+			}
+		);
 	});
 
 	vscode.commands.registerCommand("diagram-workspace.clear", () => {
@@ -209,8 +223,24 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 }
 
-async function clearSymbolTableCache(context: vscode.ExtensionContext) {
-	await Promise.all(context.workspaceState.keys().map((key) => context.workspaceState.update(key, undefined)));
+async function clearSymbolTableCache(
+	context: vscode.ExtensionContext,
+	progress?: vscode.Progress<{ message?: string }>
+): Promise<number> {
+	const cacheKeys = context.workspaceState
+		.keys()
+		.filter((key) => key.startsWith(`${SYMBOL_TABLE_CACHE_KEY_PREFIX}:`));
+
+	await Promise.all(cacheKeys.map((key) => context.workspaceState.update(key, undefined)));
+
+	const storageUri = context.storageUri ?? context.globalStorageUri;
+	progress?.report({ message: "Deleting cache files..." });
+	await vscode.workspace.fs.delete(vscode.Uri.joinPath(storageUri, SYMBOL_TABLE_CACHE_DIR), { recursive: true }).then(
+		() => undefined,
+		() => undefined
+	);
+
+	return cacheKeys.length;
 }
 
 export function deactivate() {}
