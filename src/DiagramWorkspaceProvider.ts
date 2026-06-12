@@ -8,8 +8,15 @@ export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
 	private data: DiagrammModel = { nodes: [], links: [] };
 	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel;
+	private onDataChanged?: (data: DiagrammModel) => void | Thenable<void>;
 
-	private constructor(context: vscode.ExtensionContext) {
+	private constructor(
+		context: vscode.ExtensionContext,
+		initialData: DiagrammModel = new DiagrammModel(),
+		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>
+	) {
+		this.data = initialData;
+		this.onDataChanged = onDataChanged;
 		this.diagramWorkspaceWebviewPanel = vscode.window.createWebviewPanel(
 			"apex-classes-workspace",
 			"Apex Diagram",
@@ -30,6 +37,9 @@ export default class DiagramWorkspaceProvider {
 				switch (
 					message.command // Handle messages from the webview
 				) {
+					case "ready":
+						this.restoreDiagram();
+						break;
 					case "export":
 						vscode.window
 							.showSaveDialog({
@@ -65,9 +75,13 @@ export default class DiagramWorkspaceProvider {
 		this.diagramWorkspaceWebviewPanel.onDidDispose(this.destroy, null, context.subscriptions);
 	}
 
-	public static newInstance(context: vscode.ExtensionContext): DiagramWorkspaceProvider {
+	public static newInstance(
+		context: vscode.ExtensionContext,
+		initialData?: DiagrammModel,
+		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>
+	): DiagramWorkspaceProvider {
 		if (!DiagramWorkspaceProvider.instance) {
-			DiagramWorkspaceProvider.instance = new DiagramWorkspaceProvider(context);
+			DiagramWorkspaceProvider.instance = new DiagramWorkspaceProvider(context, initialData, onDataChanged);
 		} else {
 			DiagramWorkspaceProvider.instance.showDiagramWorkspace();
 		}
@@ -95,6 +109,7 @@ export default class DiagramWorkspaceProvider {
 
 	public setData(newData: DiagrammModel): void {
 		this.data = newData;
+		this.notifyDataChanged();
 	}
 
 	public getNewNodes<T extends Node>(nodes: T[]): T[] {
@@ -121,6 +136,8 @@ export default class DiagramWorkspaceProvider {
 		}
 
 		this.data.nodes = [...this.data.nodes, ...newNodes];
+		this.data.links = this.mergeLinks(this.data.links, data.links);
+		this.notifyDataChanged();
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({
 			command: "Add",
 			value: { nodes: newNodes, links: data.links },
@@ -129,6 +146,10 @@ export default class DiagramWorkspaceProvider {
 
 	public removeNodes(nodesIds: string[]): void {
 		this.data.nodes = this.data.nodes.filter((node) => !nodesIds.includes(node.id ?? ""));
+		this.data.links = this.data.links.filter(
+			(link) => !nodesIds.includes(String(link.source)) && !nodesIds.includes(String(link.target))
+		);
+		this.notifyDataChanged();
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodesIds });
 	}
 
@@ -137,6 +158,7 @@ export default class DiagramWorkspaceProvider {
 			.map((node) => node.id)
 			.filter((id): id is string => Boolean(id));
 		this.data = new DiagrammModel();
+		this.notifyDataChanged();
 
 		if (nodeIds.length > 0) {
 			this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodeIds });
@@ -166,6 +188,40 @@ export default class DiagramWorkspaceProvider {
 		html = html.replace("./bundle.js", bundleUri.toString());
 
 		return html;
+	}
+
+	private restoreDiagram(): void {
+		if (this.data.nodes.length === 0) {
+			return;
+		}
+
+		this.diagramWorkspaceWebviewPanel.webview.postMessage({
+			command: "Add",
+			value: this.data,
+		});
+	}
+
+	private notifyDataChanged(): void {
+		this.onDataChanged?.(this.data);
+	}
+
+	private mergeLinks(currentLinks: DiagrammModel["links"], newLinks: DiagrammModel["links"]): DiagrammModel["links"] {
+		const mergedLinks = [...currentLinks];
+		const existingKeys = new Set(currentLinks.map((link) => this.getLinkKey(link)));
+
+		for (const link of newLinks) {
+			const key = this.getLinkKey(link);
+			if (!existingKeys.has(key)) {
+				mergedLinks.push(link);
+				existingKeys.add(key);
+			}
+		}
+
+		return mergedLinks;
+	}
+
+	private getLinkKey(link: DiagrammModel["links"][number]): string {
+		return `${link.source}|${link.target}|${link.type}`;
 	}
 
 	private destroy(): void {

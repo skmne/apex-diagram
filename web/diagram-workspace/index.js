@@ -44,6 +44,12 @@ diagram.setStyle({
 
 diagram.build();
 
+if (vscodeAPI) {
+	vscodeAPI.postMessage({
+		command: "ready",
+	});
+}
+
 // Handle the message inside the webview
 window.addEventListener("message", (event) => {
 	const message = event.data; // The JSON data our extension sent

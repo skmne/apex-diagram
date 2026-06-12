@@ -8,6 +8,8 @@ import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 import { parseDependency } from "./dependencyAnalyzer";
 import { DiagrammModel } from "./DiagrammModel";
 
+const DIAGRAM_STATE_KEY = "apexDiagram.diagramState";
+
 export async function activate(context: vscode.ExtensionContext) {
 	type DiagramProgress = vscode.Progress<{ message?: string }>;
 
@@ -40,8 +42,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const apexClassesIcon = new vscode.ThemeIcon("file");
 	const activeApexClassesIcon = new vscode.ThemeIcon("symbol-class");
-	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, apexClasses, apexClassesIcon);
-	const activeApexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, [], activeApexClassesIcon);
+	let diagramDataState = getStoredDiagramData(context);
+	const restoredActiveIds = new Set(
+		diagramDataState.nodes
+			.map((node) => node.id)
+			.filter((id): id is string => Boolean(id))
+	);
+	const restoredActiveApexClasses = apexClasses.filter((apexClass) => restoredActiveIds.has(getApexClassId(apexClass)));
+	const inactiveApexClasses = apexClasses.filter((apexClass) => !restoredActiveIds.has(getApexClassId(apexClass)));
+	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, inactiveApexClasses, apexClassesIcon);
+	const activeApexClassesTreeProvider = new ApexClassTreeDataProvider(
+		rootPath,
+		restoredActiveApexClasses,
+		activeApexClassesIcon
+	);
+	activeApexClassesTreeProvider.getItems().forEach(markAsActiveNode);
 
 	vscode.window.createTreeView("apex-classes-view", {
 		treeDataProvider: apexClassesTreeProvider,
@@ -111,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		activeApexClassesTreeProvider.remove(nodeIds);
 		apexClassesTreeProvider.add(selectedNodes);
 
-		DiagramWorkspaceProvider.newInstance(context).removeNodes(nodeIds);
+		getDiagramWorkspace().removeNodes(nodeIds);
 	});
 
 	vscode.commands.registerCommand("active-apex-classes-view.openClass", async (node: ApexClassTreeItem) => {
@@ -129,15 +144,19 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("diagram-workspace.start", () => {
 			vscode.commands.executeCommand("apex-classes-view.focus");
-			return DiagramWorkspaceProvider.newInstance(context).getWebviewPanel();
+			return getDiagramWorkspace().getWebviewPanel();
 		})
 	);
+
+	function getDiagramWorkspace(): DiagramWorkspaceProvider {
+		return DiagramWorkspaceProvider.newInstance(context, diagramDataState, saveDiagramData);
+	}
 
 	async function addEntry(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[], progress: DiagramProgress) {
 		const nodesToAdd = selectedNodes ?? [node];
 		progress.report({ message: "Loading Apex class details..." });
 
-		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
+		const diagramWorkspace = getDiagramWorkspace();
 		const newNodes = determineNewNodes(diagramWorkspace, nodesToAdd);
 
 		if (newNodes.length === 0) {
@@ -154,10 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	function moveNodesToActiveList(nodes: ApexClassTreeItem[]): void {
-		nodes.forEach((node: ApexClassTreeItem) => {
-			node.contextValue = "remove_context";
-			node.iconPath = activeApexClassesIcon;
-		});
+		nodes.forEach(markAsActiveNode);
 
 		const nodeIds = nodes.map((item: ApexClassTreeItem) => item.id);
 		activeApexClassesTreeProvider.add(nodes);
@@ -195,6 +211,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		activeApexClassesTreeProvider.remove(activeNodes.map((node) => node.id));
 		apexClassesTreeProvider.add(activeNodes);
 		DiagramWorkspaceProvider.getInstance()?.clear();
+		saveDiagramData(new DiagrammModel());
 	}
 
 	async function generateSymbolTables(
@@ -221,6 +238,32 @@ export async function activate(context: vscode.ExtensionContext) {
 		const document = await vscode.workspace.openTextDocument(apexClassFiles[0]);
 		await vscode.window.showTextDocument(document);
 	}
+
+	function markAsActiveNode(node: ApexClassTreeItem): void {
+		node.contextValue = "remove_context";
+		node.iconPath = activeApexClassesIcon;
+	}
+
+	function saveDiagramData(data: DiagrammModel): Thenable<void> {
+		diagramDataState = data;
+		return context.workspaceState.update(DIAGRAM_STATE_KEY, data);
+	}
+}
+
+function getStoredDiagramData(context: vscode.ExtensionContext): DiagrammModel {
+	const storedData = context.workspaceState.get<DiagrammModel>(DIAGRAM_STATE_KEY);
+	if (!storedData) {
+		return new DiagrammModel();
+	}
+
+	return {
+		nodes: storedData.nodes ?? [],
+		links: storedData.links ?? [],
+	};
+}
+
+function getApexClassId(apexClass: ApexClass): string {
+	return apexClass.NamespacePrefix ? `${apexClass.NamespacePrefix}.${apexClass.Name}` : apexClass.Name;
 }
 
 async function clearSymbolTableCache(
