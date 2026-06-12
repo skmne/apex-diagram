@@ -53,17 +53,26 @@
       {
         "command": "apex-classes-view.openWorkspace",
         "title": "Show Diagram",
-        "icon": "$(gather)"
+        "icon": "$(gather)",
+        "category": "Apex Diagram"
       },
       {
         "command": "apex-classes-view.refreshEntry",
         "title": "Refresh",
-        "icon": "$(refresh)"
+        "icon": "$(refresh)",
+        "category": "Apex Diagram"
       },
       {
         "command": "apex-classes-view.clearCache",
         "title": "Clear Cache",
-        "icon": "$(clear-all)"
+        "icon": "$(clear-all)",
+        "category": "Apex Diagram"
+      },
+      {
+        "command": "diagram-workspace.clear",
+        "title": "Clear Workspace Diagram",
+        "icon": "$(trash)",
+        "category": "Apex Diagram"
       },
       {
         "command": "apex-classes-view.addEntry",
@@ -91,6 +100,11 @@
         {
           "command": "apex-classes-view.clearCache",
           "when": "view == apex-classes-view",
+          "group": "navigation"
+        },
+        {
+          "command": "diagram-workspace.clear",
+          "when": "view == active-apex-classes-view",
           "group": "navigation"
         }
       ],

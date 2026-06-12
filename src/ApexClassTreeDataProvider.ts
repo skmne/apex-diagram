@@ -17,7 +17,15 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 	}
 
 	add(nodes: ApexClassTreeItem[]): void {
-		this.apexClassTreeItems = [...this.apexClassTreeItems, ...nodes];
+		const existingIds = new Set(this.apexClassTreeItems.map((item) => item.id));
+		const newNodes = nodes.filter((node) => {
+			if (existingIds.has(node.id)) {
+				return false;
+			}
+			existingIds.add(node.id);
+			return true;
+		});
+		this.apexClassTreeItems = [...this.apexClassTreeItems, ...newNodes];
 		this.apexClassTreeItems.sort(this.sortByName);
 		this.refresh();
 	}
@@ -35,6 +43,10 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 
 	getItemIds(): string[] {
 		return this.apexClassTreeItems.map((item) => item.id);
+	}
+
+	getItems(): ApexClassTreeItem[] {
+		return this.apexClassTreeItems;
 	}
 
 	private sortByName(a: ApexClassTreeItem, b: ApexClassTreeItem) {

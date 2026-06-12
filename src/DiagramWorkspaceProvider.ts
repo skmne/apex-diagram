@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { DiagrammModel } from "./DiagrammModel";
+import Node from "./Node";
 
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
@@ -69,6 +70,10 @@ export default class DiagramWorkspaceProvider {
 		return DiagramWorkspaceProvider.instance;
 	}
 
+	public static getInstance(): DiagramWorkspaceProvider | null {
+		return DiagramWorkspaceProvider.instance;
+	}
+
 	public showDiagramWorkspace() {
 		const columnToShowIn = vscode.window.activeTextEditor
 			? vscode.window.activeTextEditor.viewColumn
@@ -88,19 +93,50 @@ export default class DiagramWorkspaceProvider {
 		this.data = newData;
 	}
 
+	public getNewNodes<T extends Node>(nodes: T[]): T[] {
+		const existingIds = new Set(this.data.nodes.map((node) => node.id));
+		return nodes.filter((node) => {
+			if (existingIds.has(node.id)) {
+				return false;
+			}
+			existingIds.add(node.id);
+			return true;
+		});
+	}
+
+	public getNodeNames(additionalNodes: Node[] = []): string[] {
+		return [...this.data.nodes, ...additionalNodes]
+			.map((node) => node.name)
+			.filter((name): name is string => Boolean(name));
+	}
+
 	public addNodes(data: DiagrammModel): void {
-		const existingIds = new Set(this.data.nodes.map((n) => n.id));
-		const newNodes = data.nodes.filter((n) => !existingIds.has(n.id));
+		const newNodes = this.getNewNodes(data.nodes);
+		if (newNodes.length === 0) {
+			return;
+		}
+
 		this.data.nodes = [...this.data.nodes, ...newNodes];
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({
 			command: "Add",
-			value: data,
+			value: { nodes: newNodes, links: data.links },
 		});
 	}
 
 	public removeNodes(nodesIds: string[]): void {
 		this.data.nodes = this.data.nodes.filter((node) => !nodesIds.includes(node.id ?? ""));
 		this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodesIds });
+	}
+
+	public clear(): void {
+		const nodeIds = this.data.nodes
+			.map((node) => node.id)
+			.filter((id): id is string => Boolean(id));
+		this.data = new DiagrammModel();
+
+		if (nodeIds.length > 0) {
+			this.diagramWorkspaceWebviewPanel.webview.postMessage({ command: "Remove", value: nodeIds });
+		}
 	}
 
 	public executeWebviewCommand(command: string, value: unknown) {
