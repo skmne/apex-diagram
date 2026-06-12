@@ -19,6 +19,10 @@ export default class DiagramWorkspaceProvider {
 				retainContextWhenHidden: true,
 			}
 		);
+		this.diagramWorkspaceWebviewPanel.iconPath = {
+			light: vscode.Uri.file(path.join(context.extensionPath, "./resources/logo-tab-light.svg")),
+			dark: vscode.Uri.file(path.join(context.extensionPath, "./resources/logo-tab-dark.svg")),
+		};
 		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent(context);
 
 		this.diagramWorkspaceWebviewPanel.webview.onDidReceiveMessage(
