@@ -81,6 +81,11 @@
         "command": "active-apex-classes-view.removeEntry",
         "title": "Delete",
         "icon": "$(remove)"
+      },
+      {
+        "command": "active-apex-classes-view.openClass",
+        "title": "Open Apex Class",
+        "icon": "$(go-to-file)"
       }
     ],
     "menus": {
@@ -115,7 +120,12 @@
         {
           "command": "active-apex-classes-view.removeEntry",
           "when": "view == active-apex-classes-view && viewItem == remove_context",
-          "group": "inline"
+          "group": "inline@2"
+        },
+        {
+          "command": "active-apex-classes-view.openClass",
+          "when": "view == active-apex-classes-view && viewItem == remove_context",
+          "group": "inline@1"
         }
       ]
     }

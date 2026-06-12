@@ -100,6 +100,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		);
 	});
 
+	vscode.commands.registerCommand("active-apex-classes-view.openClass", async (node: ApexClassTreeItem) => {
+		if (!node) {
+			return;
+		}
+
+		await openApexClass(node);
+	});
+
 	vscode.commands.registerCommand("apex-classes-view.openWorkspace", () =>
 		vscode.commands.executeCommand("diagram-workspace.start")
 	);
@@ -189,6 +197,19 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		return tooling.generateApexSymbolTable(apexClassNames) as Promise<ApexClassMember[]>;
+	}
+
+	async function openApexClass(node: ApexClassTreeItem): Promise<void> {
+		const apexFileName = `${node.label}.cls`;
+		const apexClassFiles = await vscode.workspace.findFiles(`**/${apexFileName}`, "**/node_modules/**", 1);
+
+		if (apexClassFiles.length === 0) {
+			vscode.window.showWarningMessage(`Apex class file was not found: ${apexFileName}`);
+			return;
+		}
+
+		const document = await vscode.workspace.openTextDocument(apexClassFiles[0]);
+		await vscode.window.showTextDocument(document);
 	}
 }
 
