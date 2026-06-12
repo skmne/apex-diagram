@@ -17,7 +17,7 @@
         {
           "id": "apex-classes-bar",
           "title": "Apex Diagram",
-          "icon": "resources/logo.svg"
+          "icon": "resources/logo2.svg"
         }
       ]
     },
@@ -32,14 +32,12 @@
         {
           "id": "active-apex-classes-view",
           "name": "Active Apex Classes",
-          "icon": "resources/logo.svg",
           "contextualTitle": "Apex Diagram",
           "visibility": "collapsed"
         },
         {
           "id": "apex-classes-view",
           "name": "Apex Classes",
-          "icon": "resources/logo.svg",
           "contextualTitle": "Apex Diagram"
         }
       ]

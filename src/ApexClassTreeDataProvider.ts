@@ -2,7 +2,13 @@ import * as vscode from "vscode";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 
 export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexClassTreeItem> {
-	constructor(private workspaceRoot: string, private apexClassMembers: ApexClass[]) {}
+	constructor(
+		private workspaceRoot: string,
+		private apexClassMembers: ApexClass[],
+		private icon = new vscode.ThemeIcon("file")
+	) {
+		this.apexClassTreeItems = this.getApexClassTreeItems();
+	}
 
 	private _onDidChangeTreeData: vscode.EventEmitter<ApexClassTreeItem | undefined | null | void> =
 		new vscode.EventEmitter<ApexClassTreeItem | undefined | null | void>();
@@ -37,7 +43,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 
 	updateApexClasses(apexClasses: ApexClass[]): void {
 		this.apexClassMembers = apexClasses;
-		this.apexClassTreeItems = [];
+		this.apexClassTreeItems = this.getApexClassTreeItems();
 		this.refresh();
 	}
 
@@ -77,9 +83,6 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 			return Promise.resolve([]);
 		}
 
-		if (this.apexClassTreeItems.length === 0) {
-			this.apexClassTreeItems = this.getApexClassTreeItems();
-		}
 		this.apexClassTreeItems.sort(this.sortByName);
 		return Promise.resolve(this.apexClassTreeItems);
 	}
@@ -90,6 +93,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 					apexClass.NamespacePrefix,
 					apexClass.Name,
 					apexClass.ApiVersion ?? "",
+					this.icon,
 					vscode.TreeItemCollapsibleState.None
 				)
 		);
@@ -101,13 +105,13 @@ export class ApexClassTreeItem extends vscode.TreeItem {
 	name: string;
 	tooltip: string;
 	description: string;
-	iconPath = new vscode.ThemeIcon("outline-view-icon");
 	contextValue: string = "add_context";
 
 	constructor(
 		public readonly prefix: string,
 		public readonly label: string,
 		private readonly version: string,
+		public iconPath: vscode.ThemeIcon,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState
 	) {
 		super(label, collapsibleState);

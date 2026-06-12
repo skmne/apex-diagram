@@ -27,8 +27,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.showInformationMessage("Retrieve Apex classes");
 	const apexClasses: ApexClass[] = await tooling.getApexClasses();
 
-	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, apexClasses);
-	const activeApexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, []);
+	const apexClassesIcon = new vscode.ThemeIcon("file");
+	const activeApexClassesIcon = new vscode.ThemeIcon("symbol-class");
+	const apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, apexClasses, apexClassesIcon);
+	const activeApexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, [], activeApexClassesIcon);
 
 	vscode.window.createTreeView("apex-classes-view", {
 		treeDataProvider: apexClassesTreeProvider,
@@ -85,6 +87,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		selectedNodes.forEach((node: ApexClassTreeItem) => {
 			node.contextValue = "add_context";
+			node.iconPath = apexClassesIcon;
 		});
 		const nodeIds = selectedNodes.map((item: ApexClassTreeItem) => item.id);
 		activeApexClassesTreeProvider.remove(nodeIds);
@@ -135,6 +138,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	function moveNodesToActiveList(nodes: ApexClassTreeItem[]): void {
 		nodes.forEach((node: ApexClassTreeItem) => {
 			node.contextValue = "remove_context";
+			node.iconPath = activeApexClassesIcon;
 		});
 
 		const nodeIds = nodes.map((item: ApexClassTreeItem) => item.id);
@@ -167,6 +171,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const activeNodes = activeApexClassesTreeProvider.getItems();
 		activeNodes.forEach((node) => {
 			node.contextValue = "add_context";
+			node.iconPath = apexClassesIcon;
 		});
 
 		activeApexClassesTreeProvider.remove(activeNodes.map((node) => node.id));
