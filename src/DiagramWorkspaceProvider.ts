@@ -45,7 +45,7 @@ export default class DiagramWorkspaceProvider {
 								fs.writeFileSync(fileInfos.fsPath, message.text ?? "");
 								vscode.window
 									.showInformationMessage(
-										`Apex diagram was successfully saved!`,
+										`Apex diagram saved.`,
 										{ modal: false },
 										"Open"
 									)

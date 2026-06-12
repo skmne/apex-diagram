@@ -24,7 +24,7 @@
     "viewsWelcome": [
       {
         "view": "apex-classes-view",
-        "contents": "No apex classes found"
+        "contents": "No Apex classes found."
       }
     ],
     "views": {
@@ -45,7 +45,7 @@
     "commands": [
       {
         "command": "diagram-workspace.start",
-        "title": "Open Apex Diagram workspace",
+        "title": "Open Apex Diagram Workspace",
         "category": "Apex Diagram"
       },
       {
@@ -68,7 +68,7 @@
       },
       {
         "command": "diagram-workspace.clear",
-        "title": "Clear Workspace Diagram",
+        "title": "Clear Diagram",
         "icon": "$(trash)",
         "category": "Apex Diagram"
       },
@@ -79,7 +79,7 @@
       },
       {
         "command": "active-apex-classes-view.removeEntry",
-        "title": "Delete",
+        "title": "Remove",
         "icon": "$(remove)"
       },
       {

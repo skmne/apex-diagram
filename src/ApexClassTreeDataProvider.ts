@@ -79,7 +79,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 
 	getChildren(): Thenable<ApexClassTreeItem[]> {
 		if (!this.workspaceRoot) {
-			vscode.window.showInformationMessage("No sfdx connection in empty workspace");
+			vscode.window.showInformationMessage("Open a Salesforce workspace to load Apex classes.");
 			return Promise.resolve([]);
 		}
 

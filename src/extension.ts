@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import { ApexClassTreeDataProvider, ApexClassTreeItem } from "./ApexClassTreeDataProvider";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
 import { getSalesforceUserInfo } from "./sfdx/sfdx";
-import UserInfo from "./sfdx/UserInfo";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
@@ -18,14 +17,21 @@ export async function activate(context: vscode.ExtensionContext) {
 			: undefined;
 
 	if (!rootPath) {
-		throw Error("Salesforce project was not found");
+		throw Error("No Salesforce workspace folder was found.");
 	}
 
-	vscode.window.showInformationMessage("Authenticate with Salesforce");
-	const userInfo: UserInfo = await getSalesforceUserInfo(rootPath);
-	const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken, context.workspaceState);
-	vscode.window.showInformationMessage("Retrieve Apex classes");
-	const apexClasses: ApexClass[] = await tooling.getApexClasses();
+	const { tooling, apexClasses } = await vscode.window.withProgress(
+		{ location: vscode.ProgressLocation.Notification, title: "Apex Diagram" },
+		async (progress) => {
+			progress.report({ message: "Connecting to Salesforce..." });
+			const userInfo = await getSalesforceUserInfo(rootPath);
+			const tooling = new ToolingApi(userInfo.instanceUrl, userInfo.accessToken, context.workspaceState);
+
+			progress.report({ message: "Loading Apex classes..." });
+			const apexClasses: ApexClass[] = await tooling.getApexClasses();
+			return { tooling, apexClasses };
+		}
+	);
 
 	const apexClassesIcon = new vscode.ThemeIcon("file");
 	const activeApexClassesIcon = new vscode.ThemeIcon("symbol-class");
@@ -60,19 +66,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand("apex-classes-view.clearCache", async () => {
 		await clearSymbolTableCache(context);
-		vscode.window.showInformationMessage("Apex Diagram symbol table cache cleared.");
 	});
 
 	vscode.commands.registerCommand("diagram-workspace.clear", () => {
 		clearWorkspaceDiagram();
-		vscode.window.showInformationMessage("Apex Diagram workspace cleared.");
 	});
 
 	vscode.commands.registerCommand("apex-classes-view.addEntry", async (node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 		vscode.window.withProgress(
 			{
 				location: vscode.ProgressLocation.Notification,
-				title: `Add Apex Class ${selectedNodes && selectedNodes.length > 1 ? "es" : ""}`,
+				title: `Adding Apex class${selectedNodes && selectedNodes.length > 1 ? "es" : ""}`,
 			},
 			async (progress) => {
 				await addEntry(node, selectedNodes, progress);
@@ -94,10 +98,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		apexClassesTreeProvider.add(selectedNodes);
 
 		DiagramWorkspaceProvider.newInstance(context).removeNodes(nodeIds);
-
-		vscode.window.showInformationMessage(
-			`Successfully remove ${selectedNodes.length} Apex class${selectedNodes.length > 1 ? "es" : ""}`
-		);
 	});
 
 	vscode.commands.registerCommand("active-apex-classes-view.openClass", async (node: ApexClassTreeItem) => {
@@ -121,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	async function addEntry(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[], progress: DiagramProgress) {
 		const nodesToAdd = selectedNodes ?? [node];
-		progress.report({ message: "Receiving Apex Classes Details" });
+		progress.report({ message: "Loading Apex class details..." });
 
 		const diagramWorkspace = DiagramWorkspaceProvider.newInstance(context);
 		const newNodes = determineNewNodes(diagramWorkspace, nodesToAdd);
@@ -133,10 +133,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		const diagramData = await createDiagramData(diagramWorkspace, newNodes, progress);
 		moveNodesToActiveList(newNodes);
 		addToDiagram(diagramWorkspace, diagramData);
-
-		vscode.window.showInformationMessage(
-			`Successfully add ${newNodes.length} Apex class${newNodes.length > 1 ? "es" : ""}`
-		);
 	}
 
 	function determineNewNodes(diagramWorkspace: DiagramWorkspaceProvider, nodes: ApexClassTreeItem[]): ApexClassTreeItem[] {
@@ -164,7 +160,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const apexClassMembers = await generateSymbolTables(diagramWorkspace, newNodes);
 		if (apexClassMembers.length > 0) {
-			progress.report({ message: "Analyzing Dependencies" });
+			progress.report({ message: "Analyzing dependencies..." });
 			newData.links = parseDependency(apexClassMembers).links;
 		}
 
@@ -204,7 +200,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const apexClassFiles = await vscode.workspace.findFiles(`**/${apexFileName}`, "**/node_modules/**", 1);
 
 		if (apexClassFiles.length === 0) {
-			vscode.window.showWarningMessage(`Apex class file was not found: ${apexFileName}`);
+			vscode.window.showWarningMessage(`Could not find the Apex class file: ${apexFileName}`);
 			return;
 		}
 

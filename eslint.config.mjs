@@ -16,5 +16,14 @@ export default tseslint.config(
 			'eqeqeq': 'warn',
 			'no-throw-literal': 'warn',
 		},
+	},
+	{
+		files: [
+			'src/salesforceAPI/**/*.ts',
+			'src/test/suite/dependencyAnalyzer.test.ts',
+		],
+		rules: {
+			'@typescript-eslint/naming-convention': 'off',
+		},
 	}
 );
