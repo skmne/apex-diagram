@@ -6,6 +6,7 @@ import * as path from "path";
 import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { Memento, Uri } from "vscode";
+import { getApexClassKey } from "../apexClassKey";
 
 const SALESFORCE_API_VERSION = "66.0";
 const MAX_COMPOSITE_SUBREQUESTS = 25;
@@ -70,7 +71,7 @@ class ToolingApi extends BaseAPI {
 		return apexClasses?.filter((item) => !item.Body.toLowerCase().includes("@istest"));
 	}
 
-	public async getApexClassesByNames(apexClassNames: string[]) {
+	public async getApexClassesByNames(apexClassNames: string[]): Promise<ApexClass[]> {
 		let query = `
     		SELECT Id, NamespacePrefix, Name, Body, LastModifiedDate
    		 	FROM ApexClass
@@ -132,57 +133,54 @@ class ToolingApi extends BaseAPI {
 		});
 	}
 
-	public async generateApexSymbolTable(apexClasses: string[]) {
-		return this.getApexClassesByNames(apexClasses)
-			.then(async (apexClasses) => {
-				if (!apexClasses || apexClasses.length === 0) {
-					return new Promise((resolve) => resolve(apexClasses));
-				}
+	public async generateApexSymbolTable(apexClassNames: string[]): Promise<ApexClassMember[]> {
+		const apexClasses = await this.getApexClassesByNames(apexClassNames);
+		if (!apexClasses || apexClasses.length === 0) {
+			return [];
+		}
 
-				const { cachedApexClassMembers, uncachedApexClasses } = await this.getCachedAndUncachedApexClasses(apexClasses);
+		const { cachedApexClassMembers, uncachedApexClasses } = await this.getCachedAndUncachedApexClasses(apexClasses);
+		if (uncachedApexClasses.length === 0) {
+			return cachedApexClassMembers;
+		}
 
-				if (uncachedApexClasses.length === 0) {
-					return new Promise((resolve) => resolve(cachedApexClassMembers));
-				}
-				return this.createMetadataContainer().then((container) => {
-					const containerId = container.id!;
-					return this.createApexClassMember(uncachedApexClasses, containerId)
-						.then(async () => {
-							return this.createContainerAsyncRequest(containerId);
-						})
-						.then(async (asyncReq) => {
-							return this.checkAsyncRequestResult({ id: asyncReq.id! });
-						})
-						.then(async (reqRes) => {
-							if (reqRes.records[0]?.State === "Completed") {
-								return this.getApexClassMemberByAsyncReqId(containerId);
-							} else {
-								throw Error("Generate Symbol Table Failed");
-							}
-						})
-						.then(async (apexClassMemberResult) => {
-							return new Promise(async (resolve) => {
-								const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
-								await this.saveToCache(apexClassMembers);
-								await this.deleteMetadataContainer([containerId]).catch((err) => {
-									console.warn("Apex Diagram: Failed to delete metadata container", err);
-								});
-								resolve([...cachedApexClassMembers, ...apexClassMembers]);
-							});
-						});
-				});
-			})
-			.catch((err) => {
-				throw err;
+		const container = await this.createMetadataContainer();
+		const containerId = container.id;
+		if (!containerId) {
+			throw Error("Create MetadataContainer Failed: missing container id");
+		}
+
+		try {
+			await this.createApexClassMember(uncachedApexClasses, containerId);
+
+			const asyncReq = await this.createContainerAsyncRequest(containerId);
+			if (!asyncReq.id) {
+				throw Error("Create ContainerAsyncRequest Failed: missing request id");
+			}
+
+			const reqRes = await this.checkAsyncRequestResult({ id: asyncReq.id });
+			if (reqRes.records[0]?.State !== "Completed") {
+				throw Error("Generate Symbol Table Failed");
+			}
+
+			const apexClassMemberResult = await this.getApexClassMemberByMetadataContainerId(containerId);
+			const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
+			await this.saveToCache(apexClassMembers);
+
+			return [...cachedApexClassMembers, ...apexClassMembers];
+		} finally {
+			await this.deleteMetadataContainer([containerId]).catch((err) => {
+				console.warn("Apex Diagram: Failed to delete metadata container", err);
 			});
+		}
 	}
 
-	private getApexClassMemberByAsyncReqId(asyncRequestId: string) {
+	private getApexClassMemberByMetadataContainerId(metadataContainerId: string) {
 		return this.query(
 			`
 				SELECT Id, SymbolTable, LastSyncDate
 				FROM ApexClassMember
-				WHERE MetadataContainerId = \'${asyncRequestId}\'
+				WHERE MetadataContainerId = \'${metadataContainerId}\'
 			`
 		);
 	}
@@ -295,8 +293,7 @@ class ToolingApi extends BaseAPI {
 	}
 
 	private getClassCacheKey(namespace: string | undefined, name: string): string {
-		const classKey = namespace ? `${namespace}.${name}` : name;
-		return classKey;
+		return getApexClassKey(namespace, name) ?? name;
 	}
 
 	private getSymbolTableCacheKey(classKey: string): string {

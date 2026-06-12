@@ -176,6 +176,22 @@ suite("parseDependency", () => {
 		assert.strictEqual(assocLinks[0].target, "myns.Logger");
 	});
 
+	test("should use namespaced node id as link source", () => {
+		const members = [
+			createApexClassMember("Logger", { namespace: "myns" }),
+			createApexClassMember("AccountService", {
+				namespace: "myns",
+				externalReferences: [{ name: "Logger", namespace: "myns" }],
+			}),
+		];
+
+		const result = parseDependency(members);
+
+		assert.strictEqual(result.links.length, 1);
+		assert.strictEqual(result.links[0].source, "myns.AccountService");
+		assert.strictEqual(result.links[0].target, "myns.Logger");
+	});
+
 	test("should handle class with all relationship types", () => {
 		const members = [
 			createApexClassMember("BaseService"),

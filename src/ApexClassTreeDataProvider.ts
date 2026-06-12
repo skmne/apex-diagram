@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getApexClassKey } from "./apexClassKey";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 
 export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexClassTreeItem> {
@@ -115,7 +116,7 @@ export class ApexClassTreeItem extends vscode.TreeItem {
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState
 	) {
 		super(label, collapsibleState);
-		this.id = prefix ? prefix + "." + label : label;
+		this.id = getApexClassKey(prefix, label) ?? label;
 		this.name = this.id;
 		this.tooltip = `${this.label}-v${this.version}`;
 		this.description = this.version;
