@@ -1,6 +1,6 @@
 import { Connection } from "jsforce";
 
-import { ApexClass } from "./ApexClass";
+import { ApexClass, ApexClassWithBody } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { Memento, Uri } from "vscode";
 import { ApexSymbolTableGenerator } from "./ApexSymbolTableGenerator";
@@ -50,7 +50,7 @@ class ToolingApi extends BaseAPI {
 
 	public async getApexClasses(): Promise<ApexClass[]> {
 		let query = `
-    		SELECT Id, Name, ApiVersion, Body, LastModifiedDate
+    		SELECT Id, NamespacePrefix, Name, ApiVersion, LastModifiedDate
     		FROM ApexClass
     	`;
 		query += ` WHERE ManageableState != \'installed\'`;
@@ -58,10 +58,10 @@ class ToolingApi extends BaseAPI {
 		const result = await this.query(query);
 		const apexClasses = result?.records as unknown as ApexClass[];
 
-		return apexClasses?.filter((item) => !item.Body.toLowerCase().includes("@istest"));
+		return apexClasses?.filter((item) => !this.isLikelyTestClassName(item.Name));
 	}
 
-	public async getApexClassesByNames(apexClassNames: string[]): Promise<ApexClass[]> {
+	public async getApexClassesByNames(apexClassNames: string[]): Promise<ApexClassWithBody[]> {
 		let query = `
     		SELECT Id, NamespacePrefix, Name, Body, LastModifiedDate
    		 	FROM ApexClass
@@ -73,7 +73,7 @@ class ToolingApi extends BaseAPI {
 		query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
 
 		const result = await this.query(query);
-		const apexClasses = result?.records as unknown as ApexClass[];
+		const apexClasses = result?.records as unknown as ApexClassWithBody[];
 		return apexClasses;
 	}
 
@@ -98,7 +98,7 @@ class ToolingApi extends BaseAPI {
 		return this.conn.tooling.sobject("MetadataContainer").create(container);
 	}
 
-	public async createApexClassMember(apexClasses: ApexClass[], metadataContainerId: string) {
+	public async createApexClassMember(apexClasses: ApexClassWithBody[], metadataContainerId: string) {
 		const apexClassMembers = this.getApexMembers(apexClasses, metadataContainerId);
 		const results = [];
 
@@ -163,7 +163,7 @@ class ToolingApi extends BaseAPI {
 		}
 	}
 
-	private getApexMembers(apexClasses: ApexClass[], metadataContainerId: string) {
+	private getApexMembers(apexClasses: ApexClassWithBody[], metadataContainerId: string) {
 		const apexMembers = [];
 		for (const apexClass of apexClasses) {
 			apexMembers.push({
@@ -174,6 +174,10 @@ class ToolingApi extends BaseAPI {
 			});
 		}
 		return apexMembers;
+	}
+
+	private isLikelyTestClassName(name: string): boolean {
+		return /(^test|tests?$|_tests?$|tests?_)/i.test(name);
 	}
 }
 export { ToolingApi };

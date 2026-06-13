@@ -3,7 +3,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { Memento, Uri } from "vscode";
 import { getApexClassKey } from "../apexClassKey";
-import { ApexClass } from "./ApexClass";
+import { ApexClass, ApexClassWithBody } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX } from "./salesforceConstants";
 
@@ -43,12 +43,12 @@ class SymbolTableCache {
 		}
 	}
 
-	public async getCachedAndUncachedApexClasses(apexClasses: ApexClass[]): Promise<{
+	public async getCachedAndUncachedApexClasses(apexClasses: ApexClassWithBody[]): Promise<{
 		cachedApexClassMembers: ApexClassMember[];
-		uncachedApexClasses: ApexClass[];
+		uncachedApexClasses: ApexClassWithBody[];
 	}> {
 		const cachedApexClassMembers: ApexClassMember[] = [];
-		const uncachedApexClasses: ApexClass[] = [];
+		const uncachedApexClasses: ApexClassWithBody[] = [];
 
 		for (const apexClass of apexClasses) {
 			const cacheEntry = this.getCacheEntry(apexClass);

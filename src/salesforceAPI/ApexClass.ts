@@ -3,6 +3,10 @@ export type ApexClass = {
 	ApiVersion?: string;
 	NamespacePrefix: string;
 	Name: string;
-	Body: string;
+	Body?: string;
 	LastModifiedDate: Date;
+};
+
+export type ApexClassWithBody = ApexClass & {
+	Body: string;
 };
