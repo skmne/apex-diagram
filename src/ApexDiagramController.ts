@@ -8,7 +8,7 @@ import { getStoredDiagramData, saveDiagramData } from "./diagramState";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
-import { clearSymbolTableCache } from "./symbolTableCache";
+import { clearSymbolTableCache } from "./symbolTableCacheCommands";
 
 type DiagramProgress = vscode.Progress<{ message?: string }>;
 

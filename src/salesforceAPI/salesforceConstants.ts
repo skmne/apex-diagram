@@ -1,0 +1,5 @@
+const SALESFORCE_API_VERSION = "66.0";
+const SYMBOL_TABLE_CACHE_KEY_PREFIX = "apexDiagram.symbolTableIndex";
+const SYMBOL_TABLE_CACHE_DIR = "apexdiagram/symbol-table-cache";
+
+export { SALESFORCE_API_VERSION, SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX };

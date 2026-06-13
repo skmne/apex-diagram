@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX } from "./salesforceAPI/salesforceClient";
+import { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX } from "./salesforceAPI/salesforceConstants";
 
 async function clearSymbolTableCache(
 	context: vscode.ExtensionContext,

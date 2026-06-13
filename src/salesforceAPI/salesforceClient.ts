@@ -1,22 +1,13 @@
 import { Connection } from "jsforce";
-import * as crypto from "crypto";
-import * as fs from "fs/promises";
-import * as path from "path";
 
 import { ApexClass } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { Memento, Uri } from "vscode";
-import { getApexClassKey } from "../apexClassKey";
+import { ApexSymbolTableGenerator } from "./ApexSymbolTableGenerator";
+import { SALESFORCE_API_VERSION } from "./salesforceConstants";
+import { SymbolTableCache } from "./SymbolTableCache";
 
-const SALESFORCE_API_VERSION = "66.0";
 const MAX_COMPOSITE_SUBREQUESTS = 25;
-const SYMBOL_TABLE_CACHE_KEY_PREFIX = "apexDiagram.symbolTableIndex";
-const SYMBOL_TABLE_CACHE_DIR = "apexdiagram/symbol-table-cache";
-
-type SymbolTableCacheEntry = {
-	filePath: string;
-	lastSyncDate: string;
-};
 
 type CompositeResponse = {
 	compositeResponse: Array<{
@@ -46,16 +37,15 @@ class BaseAPI {
 }
 
 class ToolingApi extends BaseAPI {
-	cacheState: Memento;
-	private symbolTableCacheRootPath: string;
-	private orgCacheHash: string;
+	private symbolTableGenerator: ApexSymbolTableGenerator;
 
 	constructor(instanceUrl: string, accessToken: string, workspaceState: Memento, storageUri: Uri) {
 		super(instanceUrl, accessToken);
-		this.cacheState = workspaceState;
-		this.orgCacheHash = this.hash(this.instanceUrl);
-		this.symbolTableCacheRootPath = path.join(storageUri.fsPath, SYMBOL_TABLE_CACHE_DIR, this.orgCacheHash);
 		this.baseUrl += "/tooling";
+		this.symbolTableGenerator = new ApexSymbolTableGenerator(
+			this,
+			new SymbolTableCache(workspaceState, storageUri, this.instanceUrl)
+		);
 	}
 
 	public async getApexClasses(): Promise<ApexClass[]> {
@@ -85,10 +75,6 @@ class ToolingApi extends BaseAPI {
 		const result = await this.query(query);
 		const apexClasses = result?.records as unknown as ApexClass[];
 		return apexClasses;
-	}
-
-	public async getMetadataContainerByName(name: string) {
-		return this.query(`SELECT Id FROM MetadataContainer WHERE Name=\'${name}\'`);
 	}
 
 	public async getContainerAsyncRequest(asyncReqId: string) {
@@ -134,48 +120,10 @@ class ToolingApi extends BaseAPI {
 	}
 
 	public async generateApexSymbolTable(apexClassNames: string[]): Promise<ApexClassMember[]> {
-		const apexClasses = await this.getApexClassesByNames(apexClassNames);
-		if (!apexClasses || apexClasses.length === 0) {
-			return [];
-		}
-
-		const { cachedApexClassMembers, uncachedApexClasses } = await this.getCachedAndUncachedApexClasses(apexClasses);
-		if (uncachedApexClasses.length === 0) {
-			return cachedApexClassMembers;
-		}
-
-		const container = await this.createMetadataContainer();
-		const containerId = container.id;
-		if (!containerId) {
-			throw Error("Create MetadataContainer Failed: missing container id");
-		}
-
-		try {
-			await this.createApexClassMember(uncachedApexClasses, containerId);
-
-			const asyncReq = await this.createContainerAsyncRequest(containerId);
-			if (!asyncReq.id) {
-				throw Error("Create ContainerAsyncRequest Failed: missing request id");
-			}
-
-			const reqRes = await this.checkAsyncRequestResult({ id: asyncReq.id });
-			if (reqRes.records[0]?.State !== "Completed") {
-				throw Error("Generate Symbol Table Failed");
-			}
-
-			const apexClassMemberResult = await this.getApexClassMemberByMetadataContainerId(containerId);
-			const apexClassMembers = apexClassMemberResult.records as unknown as ApexClassMember[];
-			await this.saveToCache(apexClassMembers);
-
-			return [...cachedApexClassMembers, ...apexClassMembers];
-		} finally {
-			await this.deleteMetadataContainer([containerId]).catch((err) => {
-				console.warn("Apex Diagram: Failed to delete metadata container", err);
-			});
-		}
+		return this.symbolTableGenerator.generate(apexClassNames);
 	}
 
-	private getApexClassMemberByMetadataContainerId(metadataContainerId: string) {
+	public getApexClassMemberByMetadataContainerId(metadataContainerId: string) {
 		return this.query(
 			`
 				SELECT Id, SymbolTable, LastSyncDate
@@ -215,103 +163,6 @@ class ToolingApi extends BaseAPI {
 		}
 	}
 
-	private async checkAsyncRequestResult(asyncReq: { id: string }) {
-		await this.sleep(2000);
-		let reqRes = await this.getContainerAsyncRequest(asyncReq.id);
-		while (reqRes.records[0]?.State === "Queued") {
-			await this.sleep(2000);
-			reqRes = await this.getContainerAsyncRequest(asyncReq.id);
-		}
-		return reqRes;
-	}
-
-	private async saveToCache(apexClassMembers: ApexClassMember[]) {
-		await fs.mkdir(this.symbolTableCacheRootPath, { recursive: true });
-
-		for (const item of apexClassMembers) {
-			if (!item.SymbolTable.name) {
-				continue;
-			}
-			const classKey = this.getClassCacheKey(item.SymbolTable.namespace, item.SymbolTable.name);
-			const cacheKey = this.getSymbolTableCacheKey(classKey);
-			const filePath = this.getSymbolTableCacheFilePath(classKey);
-			await fs.writeFile(filePath, JSON.stringify(item), "utf8");
-			await this.cacheState.update(cacheKey, {
-				filePath,
-				lastSyncDate: String(item.LastSyncDate),
-			} satisfies SymbolTableCacheEntry);
-		}
-	}
-
-	private async getCachedAndUncachedApexClasses(apexClasses: ApexClass[]): Promise<{
-		cachedApexClassMembers: ApexClassMember[];
-		uncachedApexClasses: ApexClass[];
-	}> {
-		const cachedApexClassMembers: ApexClassMember[] = [];
-		const uncachedApexClasses: ApexClass[] = [];
-
-		for (const apexClass of apexClasses) {
-			const cacheEntry = this.getCacheEntry(apexClass);
-			if (!this.hasUpToDateSymbolTableCache(cacheEntry, apexClass)) {
-				uncachedApexClasses.push(apexClass);
-				continue;
-			}
-
-			const cachedMember = await this.readApexClassMemberFromCache(cacheEntry!.filePath);
-			if (cachedMember) {
-				cachedApexClassMembers.push(cachedMember);
-			} else {
-				uncachedApexClasses.push(apexClass);
-			}
-		}
-
-		return { cachedApexClassMembers, uncachedApexClasses };
-	}
-
-	private getCacheEntry(apexClass: ApexClass): SymbolTableCacheEntry | undefined {
-		const classKey = this.getClassCacheKey(apexClass.NamespacePrefix, apexClass.Name);
-		return this.cacheState.get<SymbolTableCacheEntry>(this.getSymbolTableCacheKey(classKey));
-	}
-
-	private hasUpToDateSymbolTableCache(cacheEntry: SymbolTableCacheEntry | undefined, apexClass: ApexClass): boolean {
-		if (!cacheEntry?.filePath) {
-			return false;
-		}
-
-		const cachedLastSyncMs = new Date(cacheEntry.lastSyncDate).getTime();
-		const apexLastModifiedMs = new Date(apexClass.LastModifiedDate).getTime();
-
-		return cachedLastSyncMs === apexLastModifiedMs;
-	}
-
-	private async readApexClassMemberFromCache(filePath: string): Promise<ApexClassMember | undefined> {
-		try {
-			return JSON.parse(await fs.readFile(filePath, "utf8")) as ApexClassMember;
-		} catch {
-			return undefined;
-		}
-	}
-
-	private getClassCacheKey(namespace: string | undefined, name: string): string {
-		return getApexClassKey(namespace, name) ?? name;
-	}
-
-	private getSymbolTableCacheKey(classKey: string): string {
-		return `${SYMBOL_TABLE_CACHE_KEY_PREFIX}:${this.orgCacheHash}:${classKey}`;
-	}
-
-	private getSymbolTableCacheFilePath(classKey: string): string {
-		return path.join(this.symbolTableCacheRootPath, `${this.hash(classKey)}.json`);
-	}
-
-	private hash(value: string): string {
-		return crypto.createHash("sha256").update(value).digest("hex");
-	}
-
-	private sleep(ms: number) {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-
 	private getApexMembers(apexClasses: ApexClass[], metadataContainerId: string) {
 		const apexMembers = [];
 		for (const apexClass of apexClasses) {
@@ -325,4 +176,4 @@ class ToolingApi extends BaseAPI {
 		return apexMembers;
 	}
 }
-export { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX, ToolingApi };
+export { ToolingApi };
