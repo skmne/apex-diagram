@@ -1,38 +1,13 @@
 import UMLDiagram from '@alesik/uml-diagram';
 
-var header = document.getElementById("header").getBoundingClientRect();
-var svgContainer = document.getElementById("container").getBoundingClientRect();
-var width = svgContainer.width;
-var height = svgContainer.height - header.height;
-const svgElement = document.querySelector("#uml-diagram");
-let vscodeAPI;
+const headerElement = getHTMLElement("header");
+const containerElement = getHTMLElement("container");
+const svgElement = getHTMLElement("uml-diagram");
+const vscodeAPI = getVsCodeApi();
 
-if (typeof acquireVsCodeApi === "function") {
-	vscodeAPI = acquireVsCodeApi();
-}
-
-setSvgSize(svgElement, width, height);
-window.addEventListener(
-	"resize",
-	(event) => {
-		header = document.getElementById("header").getBoundingClientRect();
-		svgContainer = document.getElementById("container").getBoundingClientRect();
-		width = svgContainer.width;
-		height = svgContainer.height - header.height;
-		setSvgSize(svgElement, width, height);
-	},
-	true
-);
-
-function setSvgSize(svgElement, width, height) {
-	if (svgElement) {
-		svgElement.setAttribute("width", width);
-		svgElement.setAttribute("height", height);
-	}
-}
+resizeDiagram();
 
 const diagram = new UMLDiagram(svgElement);
-
 diagram.setStyle({
 	nodeForeground: "var(--vscode-editor-foreground)",
 	nodeBackground: "var(--vscode-editor-background)",
@@ -41,8 +16,12 @@ diagram.setStyle({
 	fontColor: "var(--vscode-editor-foreground)",
 	nodeWidth: 200,
 });
-
 diagram.build();
+
+bindResize();
+bindWebviewMessages();
+bindToolbar();
+bindKeyboard();
 
 if (vscodeAPI) {
 	vscodeAPI.postMessage({
@@ -50,62 +29,101 @@ if (vscodeAPI) {
 	});
 }
 
-// Handle the message inside the webview
-window.addEventListener("message", (event) => {
-	const message = event.data; // The JSON data our extension sent
-	switch (message.command) {
-		case "Add":
-			diagram.addItems(message.value);
-			break;
-		case "Remove":
-			diagram.removeItems(message.value);
-			break;
+function getHTMLElement(id) {
+	const element = document.getElementById(id);
+	if (!element) {
+		throw new Error(`Missing required webview element: ${id}`);
 	}
-});
 
-document.getElementById("zoomIn").addEventListener("click", (e) => {
-	diagram.getZoom().zoomIn();
-});
+	return element;
+}
 
-document.getElementById("zoomOut").addEventListener("click", () => {
-	diagram.getZoom().zoomOut();
-});
-
-document.getElementById("resetZoom").addEventListener("click", () => {
-	diagram.getZoom().resetZoom();
-});
-
-document.addEventListener("keydown", function (event) {
-	switch (event.keyCode) {
-		case 65: // 'A'
-			diagram.getZoom().panLeft();
-			break;
-		case 83: // 'S'
-			diagram.getZoom().panDown();
-			break;
-		case 68: // 'D'
-			diagram.getZoom().panRight();
-			break;
-		case 87: // 'W'
-			diagram.getZoom().panUp();
-			break;
-		case 32: // spacebar
-			diagram.getZoom().center();
-			break;
+function getVsCodeApi() {
+	if (typeof acquireVsCodeApi === "function") {
+		return acquireVsCodeApi();
 	}
-});
 
-document.getElementById("export").addEventListener("click", () => {
-	if (vscodeAPI) {
-		const svgString = getSVGText();
-		vscodeAPI.postMessage({
-			command: "export",
-			text: svgString,
-		});
-	} else {
-		exportSvg();
-	}
-});
+	return undefined;
+}
+
+function bindResize() {
+	window.addEventListener("resize", resizeDiagram, true);
+}
+
+function resizeDiagram() {
+	const header = headerElement.getBoundingClientRect();
+	const svgContainer = containerElement.getBoundingClientRect();
+	const width = svgContainer.width;
+	const height = svgContainer.height - header.height;
+
+	setSvgSize(svgElement, width, height);
+}
+
+function setSvgSize(element, width, height) {
+	element.setAttribute("width", width);
+	element.setAttribute("height", height);
+}
+
+function bindWebviewMessages() {
+	window.addEventListener("message", (event) => {
+		const message = event.data;
+		switch (message.command) {
+			case "Add":
+				diagram.addItems(message.value);
+				break;
+			case "Remove":
+				diagram.removeItems(message.value);
+				break;
+		}
+	});
+}
+
+function bindToolbar() {
+	getHTMLElement("zoomIn").addEventListener("click", () => {
+		diagram.getZoom().zoomIn();
+	});
+
+	getHTMLElement("zoomOut").addEventListener("click", () => {
+		diagram.getZoom().zoomOut();
+	});
+
+	getHTMLElement("resetZoom").addEventListener("click", () => {
+		diagram.getZoom().resetZoom();
+	});
+
+	getHTMLElement("export").addEventListener("click", () => {
+		if (vscodeAPI) {
+			vscodeAPI.postMessage({
+				command: "export",
+				text: getSVGText(),
+			});
+		} else {
+			exportSvg();
+		}
+	});
+}
+
+function bindKeyboard() {
+	document.addEventListener("keydown", (event) => {
+		switch (event.key.toLowerCase()) {
+			case "a":
+				diagram.getZoom().panLeft();
+				break;
+			case "s":
+				diagram.getZoom().panDown();
+				break;
+			case "d":
+				diagram.getZoom().panRight();
+				break;
+			case "w":
+				diagram.getZoom().panUp();
+				break;
+			case " ":
+				diagram.getZoom().center();
+				break;
+		}
+	});
+}
 
 function exportSvg() {
 	const svgString = getSVGText();
