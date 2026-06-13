@@ -21,6 +21,7 @@ export default tseslint.config(
 		files: [
 			'src/salesforceAPI/**/*.ts',
 			'src/test/suite/dependencyAnalyzer.test.ts',
+			'src/test/suite/SymbolTableCache.test.ts',
 		],
 		rules: {
 			'@typescript-eslint/naming-convention': 'off',

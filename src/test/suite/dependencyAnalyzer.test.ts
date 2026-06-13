@@ -2,25 +2,27 @@ import * as assert from "assert";
 import { parseDependency } from "../../dependencyAnalyzer";
 import { ApexClassMember } from "../../salesforceAPI/ApexClassMember";
 
-function createApexClassMember(
+type Ref = { name: string; namespace?: string };
+
+function member(
 	name: string,
-	opts?: {
+	opts: {
 		namespace?: string;
 		parentClass?: string;
 		interfaces?: string[];
-		externalReferences?: Array<{ name: string; namespace?: string }>;
-	}
+		externalReferences?: Ref[];
+	} = {}
 ): ApexClassMember {
 	return {
-		Id: `id_${name}`,
-		LastSyncDate: new Date(),
+		Id: name,
+		LastSyncDate: new Date(0),
 		SymbolTable: {
-			id: `id_${name}`,
+			id: name,
 			name,
-			namespace: opts?.namespace ?? "",
-			parentClass: opts?.parentClass,
-			interfaces: opts?.interfaces ?? [],
-			externalReferences: (opts?.externalReferences ?? []).map((ref) => ({
+			namespace: opts.namespace ?? "",
+			parentClass: opts.parentClass,
+			interfaces: opts.interfaces ?? [],
+			externalReferences: (opts.externalReferences ?? []).map((ref) => ({
 				name: ref.name,
 				namespace: ref.namespace ?? "",
 				methods: [],
@@ -37,195 +39,81 @@ function createApexClassMember(
 	};
 }
 
+function linkKeys(model = parseDependency([])): string[] {
+	return model.links.map((link) => `${link.source}->${link.target}:${link.type}`).sort();
+}
+
 suite("parseDependency", () => {
-	test("should return empty model for empty input", () => {
-		const result = parseDependency([]);
-		assert.strictEqual(result.nodes.length, 0);
-		assert.strictEqual(result.links.length, 0);
+	test("creates one node per Apex class", () => {
+		const model = parseDependency([
+			member("InvoiceService"),
+			member("Logger", { namespace: "pkg" }),
+		]);
+
+		assert.deepStrictEqual(
+			model.nodes.map((node) => ({ id: node.id, name: node.name, namespace: node.namespace })),
+			[
+				{ id: "InvoiceService", name: "InvoiceService", namespace: "" },
+				{ id: "pkg.Logger", name: "Logger", namespace: "pkg" },
+			]
+		);
+		assert.deepStrictEqual(model.links, []);
 	});
 
-	test("should create nodes for each class", () => {
-		const members = [
-			createApexClassMember("AccountService"),
-			createApexClassMember("ContactService"),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.nodes.length, 2);
-		assert.strictEqual(result.nodes[0].name, "AccountService");
-		assert.strictEqual(result.nodes[1].name, "ContactService");
-	});
-
-	test("should create node with namespace", () => {
-		const members = [
-			createApexClassMember("AccountService", { namespace: "myns" }),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.nodes.length, 1);
-		assert.strictEqual(result.nodes[0].namespace, "myns");
-		assert.strictEqual(result.nodes[0].name, "AccountService");
-	});
-
-	test("should create Inheritance link for parentClass", () => {
-		const members = [
-			createApexClassMember("BaseService"),
-			createApexClassMember("AccountService", { parentClass: "BaseService" }),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.links.length, 1);
-		assert.strictEqual(result.links[0].source, "AccountService");
-		assert.strictEqual(result.links[0].target, "BaseService");
-		assert.strictEqual(result.links[0].type, "Inheritance");
-	});
-
-	test("should not create Inheritance link when parent is not in the input set", () => {
-		const members = [
-			createApexClassMember("AccountService", { parentClass: "UnknownBase" }),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.nodes.length, 1);
-		assert.strictEqual(result.links.length, 0);
-	});
-
-	test("should create Realization links for interfaces", () => {
-		const members = [
-			createApexClassMember("IService"),
-			createApexClassMember("AccountService", { interfaces: ["IService"] }),
-		];
-
-		const result = parseDependency(members);
-
-		const realizationLinks = result.links.filter((l) => l.type === "Realization");
-		assert.strictEqual(realizationLinks.length, 1);
-		assert.strictEqual(realizationLinks[0].source, "AccountService");
-		assert.strictEqual(realizationLinks[0].target, "IService");
-	});
-
-	test("should create Realization links for multiple interfaces", () => {
-		const members = [
-			createApexClassMember("IService"),
-			createApexClassMember("ILoggable"),
-			createApexClassMember("AccountService", {
-				interfaces: ["IService", "ILoggable"],
-			}),
-		];
-
-		const result = parseDependency(members);
-
-		const realizationLinks = result.links.filter((l) => l.type === "Realization");
-		assert.strictEqual(realizationLinks.length, 2);
-	});
-
-	test("should not create Realization link when interface is not in the input set", () => {
-		const members = [
-			createApexClassMember("AccountService", { interfaces: ["IUnknown"] }),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.links.length, 0);
-	});
-
-	test("should create Directed Association links for external references", () => {
-		const members = [
-			createApexClassMember("Logger"),
-			createApexClassMember("AccountService", {
-				externalReferences: [{ name: "Logger" }],
-			}),
-		];
-
-		const result = parseDependency(members);
-
-		const assocLinks = result.links.filter((l) => l.type === "Directed Association");
-		assert.strictEqual(assocLinks.length, 1);
-		assert.strictEqual(assocLinks[0].source, "AccountService");
-		assert.strictEqual(assocLinks[0].target, "Logger");
-	});
-
-	test("should not create link for external reference not in the input set", () => {
-		const members = [
-			createApexClassMember("AccountService", {
-				externalReferences: [{ name: "UnknownUtil" }],
-			}),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.links.length, 0);
-	});
-
-	test("should handle external reference with namespace", () => {
-		const members = [
-			createApexClassMember("Logger", { namespace: "myns" }),
-			createApexClassMember("AccountService", {
-				externalReferences: [{ name: "Logger", namespace: "myns" }],
-			}),
-		];
-
-		const result = parseDependency(members);
-
-		const assocLinks = result.links.filter((l) => l.type === "Directed Association");
-		assert.strictEqual(assocLinks.length, 1);
-		assert.strictEqual(assocLinks[0].target, "myns.Logger");
-	});
-
-	test("should use namespaced node id as link source", () => {
-		const members = [
-			createApexClassMember("Logger", { namespace: "myns" }),
-			createApexClassMember("AccountService", {
-				namespace: "myns",
-				externalReferences: [{ name: "Logger", namespace: "myns" }],
-			}),
-		];
-
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.links.length, 1);
-		assert.strictEqual(result.links[0].source, "myns.AccountService");
-		assert.strictEqual(result.links[0].target, "myns.Logger");
-	});
-
-	test("should handle class with all relationship types", () => {
-		const members = [
-			createApexClassMember("BaseService"),
-			createApexClassMember("IService"),
-			createApexClassMember("Logger"),
-			createApexClassMember("AccountService", {
+	test("creates inheritance, realization, and association links for known classes", () => {
+		const model = parseDependency([
+			member("BaseService"),
+			member("Auditable"),
+			member("Logger"),
+			member("InvoiceService", {
 				parentClass: "BaseService",
-				interfaces: ["IService"],
+				interfaces: ["Auditable"],
 				externalReferences: [{ name: "Logger" }],
 			}),
-		];
+		]);
 
-		const result = parseDependency(members);
-
-		assert.strictEqual(result.nodes.length, 4);
-		assert.strictEqual(result.links.length, 3);
-
-		const inheritance = result.links.filter((l) => l.type === "Inheritance");
-		const realization = result.links.filter((l) => l.type === "Realization");
-		const association = result.links.filter((l) => l.type === "Directed Association");
-
-		assert.strictEqual(inheritance.length, 1);
-		assert.strictEqual(realization.length, 1);
-		assert.strictEqual(association.length, 1);
+		assert.deepStrictEqual(linkKeys(model), [
+			"InvoiceService->Auditable:Realization",
+			"InvoiceService->BaseService:Inheritance",
+			"InvoiceService->Logger:Directed Association",
+		]);
 	});
 
-	test("should handle single class with no relationships", () => {
-		const members = [createApexClassMember("StandaloneClass")];
+	test("ignores parent, interface, and external references outside the input set", () => {
+		const model = parseDependency([
+			member("InvoiceService", {
+				parentClass: "MissingBase",
+				interfaces: ["MissingInterface"],
+				externalReferences: [{ name: "MissingLogger" }],
+			}),
+		]);
 
-		const result = parseDependency(members);
+		assert.strictEqual(model.nodes.length, 1);
+		assert.deepStrictEqual(model.links, []);
+	});
 
-		assert.strictEqual(result.nodes.length, 1);
-		assert.strictEqual(result.links.length, 0);
-		assert.strictEqual(result.nodes[0].name, "StandaloneClass");
+	test("matches namespaced source and external reference keys", () => {
+		const model = parseDependency([
+			member("Logger", { namespace: "pkg" }),
+			member("InvoiceService", {
+				namespace: "pkg",
+				externalReferences: [{ namespace: "pkg", name: "Logger" }],
+			}),
+		]);
+
+		assert.deepStrictEqual(linkKeys(model), [
+			"pkg.InvoiceService->pkg.Logger:Directed Association",
+		]);
+	});
+
+	test("does not match an unnamespaced reference to a namespaced class", () => {
+		const model = parseDependency([
+			member("Logger", { namespace: "pkg" }),
+			member("InvoiceService", {
+				externalReferences: [{ name: "Logger" }],
+			}),
+		]);
+
+		assert.deepStrictEqual(model.links, []);
 	});
 });
-
