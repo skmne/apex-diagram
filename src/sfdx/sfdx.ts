@@ -19,9 +19,18 @@ async function getSalesforceUserInfo(projectPath: string) {
 				}
 			})
 			.catch((err) => {
-				reject(err + "; path=" + projectPath);
+				reject(new Error(getSalesforceUserInfoErrorMessage(err, projectPath)));
 			});
 	});
+}
+
+function getSalesforceUserInfoErrorMessage(err: unknown, projectPath: string): string {
+	const message = String(err);
+	if (message.toLowerCase().includes("not recognized") || message.toLowerCase().includes("not found")) {
+		return `Salesforce CLI was not found. Install the Salesforce CLI and sign in to an org. Workspace: ${projectPath}`;
+	}
+
+	return `Could not get Salesforce org user info. Make sure the workspace has a default Salesforce org and you are signed in with the Salesforce CLI. ${message}; path=${projectPath}`;
 }
 
 export { getSalesforceUserInfo };
