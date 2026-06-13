@@ -61,33 +61,4 @@ function parseDependency(apexClassMembers: Array<ApexClassMember>): DiagrammMode
 	return model;
 }
 
-function getUnloadedApexNames(
-	oldApexClassMembers: Array<ApexClassMember>,
-	newApexClassMembers: Array<ApexClassMember>
-) {
-	const loadedClassNames = oldApexClassMembers.map((item) => item.SymbolTable.name);
-	const unloadedClassNames: string[] = [];
-
-	for (const apexMember of newApexClassMembers) {
-		if (apexMember.SymbolTable.parentClass && !loadedClassNames.includes(apexMember.SymbolTable.parentClass)) {
-			unloadedClassNames.push(apexMember.SymbolTable.parentClass);
-		}
-		if (apexMember.SymbolTable.interfaces.length > 0) {
-			const filteredInterfaces = apexMember.SymbolTable.interfaces.filter(
-				(item: string) => !loadedClassNames.includes(item)
-			);
-			if (filteredInterfaces.length > 0) {
-				unloadedClassNames.push(...filteredInterfaces);
-			}
-		}
-		const externalRefs = apexMember.SymbolTable.externalReferences
-			.map((item) => item.name)
-			.filter((item: string) => !loadedClassNames.includes(item));
-		if (externalRefs.length > 0) {
-			unloadedClassNames.push(...externalRefs);
-		}
-	}
-
-	return [...new Set<string>(unloadedClassNames)];
-}
-export { parseDependency, getUnloadedApexNames };
+export { parseDependency };
