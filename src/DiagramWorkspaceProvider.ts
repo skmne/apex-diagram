@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import * as crypto from "crypto";
 import { DiagrammModel } from "./DiagrammModel";
 import Node from "./Node";
 
@@ -24,6 +25,10 @@ export default class DiagramWorkspaceProvider {
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
+				localResourceRoots: [
+					vscode.Uri.joinPath(context.extensionUri, "dist", "webview"),
+					vscode.Uri.joinPath(context.extensionUri, "resources"),
+				],
 			}
 		);
 		this.diagramWorkspaceWebviewPanel.iconPath = {
@@ -34,37 +39,12 @@ export default class DiagramWorkspaceProvider {
 
 		this.diagramWorkspaceWebviewPanel.webview.onDidReceiveMessage(
 			async (message: { command: string; text?: string }) => {
-				switch (
-					message.command // Handle messages from the webview
-				) {
+				switch (message.command) {
 					case "ready":
 						this.restoreDiagram();
 						break;
 					case "export":
-						vscode.window
-							.showSaveDialog({
-								saveLabel: "Save Apex Diagram",
-								// defaultUri: vscode.Uri.file(os.homedir()),
-								filters: {
-									// eslint-disable-next-line @typescript-eslint/naming-convention
-									Images: ["svg"],
-								},
-							})
-							.then((fileInfos: vscode.Uri | undefined) => {
-								if (!fileInfos) { return; }
-								fs.writeFileSync(fileInfos.fsPath, message.text ?? "");
-								vscode.window
-									.showInformationMessage(
-										`Apex diagram saved.`,
-										{ modal: false },
-										"Open"
-									)
-									.then((selectedButton) => {
-										if (selectedButton === "Open") {
-											vscode.env.openExternal(fileInfos); // Open the URI externally
-										}
-									});
-							});
+						await this.exportDiagram(message.text);
 						break;
 				}
 			},
@@ -185,9 +165,48 @@ export default class DiagramWorkspaceProvider {
 		const bundleUri = this.diagramWorkspaceWebviewPanel.webview.asWebviewUri(
 			vscode.Uri.file(pathToBundle)
 		);
-		html = html.replace("./bundle.js", bundleUri.toString());
+		const nonce = this.getNonce();
+		const csp = [
+			"default-src 'none'",
+			`img-src ${this.diagramWorkspaceWebviewPanel.webview.cspSource} data:`,
+			`style-src ${this.diagramWorkspaceWebviewPanel.webview.cspSource} 'unsafe-inline'`,
+			`script-src 'nonce-${nonce}' 'unsafe-eval'`,
+		].join("; ");
+		html = html
+			.replace("{{csp}}", csp)
+			.replace("{{nonce}}", nonce)
+			.replace("./bundle.js", bundleUri.toString());
 
 		return html;
+	}
+
+	private async exportDiagram(svgText?: string): Promise<void> {
+		const fileInfo = await vscode.window.showSaveDialog({
+			saveLabel: "Save Apex Diagram",
+			filters: {
+				// eslint-disable-next-line @typescript-eslint/naming-convention
+				Images: ["svg"],
+			},
+		});
+
+		if (!fileInfo) {
+			return;
+		}
+
+		await vscode.workspace.fs.writeFile(fileInfo, Buffer.from(svgText ?? "", "utf8"));
+		const selectedButton = await vscode.window.showInformationMessage(
+			"Apex diagram saved.",
+			{ modal: false },
+			"Open"
+		);
+
+		if (selectedButton === "Open") {
+			await vscode.env.openExternal(fileInfo);
+		}
+	}
+
+	private getNonce(): string {
+		return crypto.randomBytes(16).toString("base64");
 	}
 
 	private restoreDiagram(): void {
