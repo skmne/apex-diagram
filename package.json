@@ -38,7 +38,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -170,9 +170,10 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "npm run build:webview && tsc -p ./",
+    "compile": "npm run build:webview && npm run build:extension",
     "compile:test": "tsc -p ./tsconfig.test.json",
     "build:webview": "webpack --config webpack.webview.config.js",
+    "build:extension": "tsc -p ./ && webpack --config webpack.extension.config.js",
     "watch": "tsc -watch -p ./",
     "watch:webview": "webpack --config webpack.webview.config.js --watch",
     "pretest": "npm run compile && npm run compile:test && npm run lint",

@@ -2,14 +2,9 @@
 .vscode-test/**
 .claude/**
 .sfdx/**
+node_modules/**
 out-test/**
-out/test/**
-out/models/**
-out/*.js
-!out/extension.js
-!out/terminal.js
-out/salesforceAPI/apexClassFilters.js
-out/salesforceAPI/salesforceAPI.js
+out/**
 test/**
 src/**
 web/diagram-workspace/diagram/**
@@ -21,6 +16,7 @@ web/diagram-workspace/README.md
 AGENTS.md
 eslint.config.mjs
 package-lock.json
+webpack.extension.config.js
 webpack.webview.config.js
 vsc-extension-quickstart.md
 tsconfig*.json
