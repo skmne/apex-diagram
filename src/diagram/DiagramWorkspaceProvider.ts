@@ -58,6 +58,9 @@ export default class DiagramWorkspaceProvider {
 					case "export":
 						await this.exportDiagram(message.text);
 						break;
+					case "openClass":
+						await this.openApexClass(message.value);
+						break;
 					case "layoutChanged":
 						this.updateNodeLayout(message.value);
 						break;
@@ -218,6 +221,32 @@ export default class DiagramWorkspaceProvider {
 		if (selectedButton === "Open") {
 			await vscode.env.openExternal(fileInfo);
 		}
+	}
+
+	private async openApexClass(value: unknown): Promise<void> {
+		if (!this.isApexClassOpenRequest(value)) {
+			return;
+		}
+
+		const apexFileName = `${value.name}.cls`;
+		const apexClassFiles = await vscode.workspace.findFiles(`**/${apexFileName}`, "**/node_modules/**", 1);
+
+		if (apexClassFiles.length === 0) {
+			vscode.window.showWarningMessage(`Could not find the Apex class file: ${apexFileName}`);
+			return;
+		}
+
+		const document = await vscode.workspace.openTextDocument(apexClassFiles[0]);
+		await vscode.window.showTextDocument(document);
+	}
+
+	private isApexClassOpenRequest(value: unknown): value is { name: string } {
+		if (!value || typeof value !== "object") {
+			return false;
+		}
+
+		const request = value as { name?: unknown };
+		return typeof request.name === "string" && request.name.length > 0;
 	}
 
 	private getNonce(): string {

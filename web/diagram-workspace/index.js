@@ -3,7 +3,10 @@ import UMLDiagram from '@alesik/uml-diagram';
 const headerElement = getHTMLElement("header");
 const containerElement = getHTMLElement("container");
 const svgElement = getHTMLElement("uml-diagram");
+const nodeContextMenuElement = getHTMLElement("nodeContextMenu");
+const openClassFileElement = getHTMLElement("openClassFile");
 const vscodeAPI = getVsCodeApi();
+let contextMenuNode;
 
 resizeDiagram();
 
@@ -62,6 +65,12 @@ function bindDiagramEvents() {
 			value: getNodeLayout(data),
 		});
 	});
+
+	diagram.on("nodeContextMenu", ({ node, event }) => {
+		event.preventDefault();
+		contextMenuNode = node;
+		showNodeContextMenu(event.clientX, event.clientY);
+	});
 }
 
 function resizeDiagram() {
@@ -93,6 +102,22 @@ function bindWebviewMessages() {
 }
 
 function bindToolbar() {
+	openClassFileElement.addEventListener("click", () => {
+		openContextMenuNodeFile();
+	});
+
+	document.addEventListener("click", (event) => {
+		if (!nodeContextMenuElement.contains(event.target)) {
+			hideNodeContextMenu();
+		}
+	});
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape") {
+			hideNodeContextMenu();
+		}
+	});
+
 	getHTMLElement("zoomIn").addEventListener("click", () => {
 		diagram.getZoom().zoomIn();
 	});
@@ -162,4 +187,50 @@ function getNodeLayout(data) {
 			y: node.y,
 		}))
 		.filter((node) => typeof node.id === "string" && Number.isFinite(node.x) && Number.isFinite(node.y));
+}
+
+function showNodeContextMenu(x, y) {
+	nodeContextMenuElement.classList.remove("hidden");
+
+	const rect = nodeContextMenuElement.getBoundingClientRect();
+	const left = Math.min(x, window.innerWidth - rect.width - 8);
+	const top = Math.min(y, window.innerHeight - rect.height - 8);
+
+	nodeContextMenuElement.style.left = `${Math.max(8, left)}px`;
+	nodeContextMenuElement.style.top = `${Math.max(8, top)}px`;
+}
+
+function hideNodeContextMenu() {
+	nodeContextMenuElement.classList.add("hidden");
+	contextMenuNode = undefined;
+}
+
+function openContextMenuNodeFile() {
+	if (!vscodeAPI || !contextMenuNode) {
+		hideNodeContextMenu();
+		return;
+	}
+
+	const name = getNodeName(contextMenuNode);
+	if (name) {
+		vscodeAPI.postMessage({
+			command: "openClass",
+			value: { name },
+		});
+	}
+
+	hideNodeContextMenu();
+}
+
+function getNodeName(node) {
+	if (typeof node.name === "string" && node.name.length > 0) {
+		return node.name;
+	}
+
+	if (typeof node.id !== "string" || node.id.length === 0) {
+		return undefined;
+	}
+
+	const idParts = node.id.split(".");
+	return idParts[idParts.length - 1];
 }
