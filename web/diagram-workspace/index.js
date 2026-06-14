@@ -5,6 +5,7 @@ const containerElement = getHTMLElement("container");
 const svgElement = getHTMLElement("uml-diagram");
 const nodeContextMenuElement = getHTMLElement("nodeContextMenu");
 const openClassFileElement = getHTMLElement("openClassFile");
+const removeDiagramItemElement = getHTMLElement("removeDiagramItem");
 const showSourceElement = getHTMLElement("showSource");
 const vscodeAPI = getVsCodeApi();
 let contextMenuNode;
@@ -111,6 +112,10 @@ function bindWebviewMessages() {
 function bindToolbar() {
 	openClassFileElement.addEventListener("click", () => {
 		openContextMenuNodeFile();
+	});
+
+	removeDiagramItemElement.addEventListener("click", () => {
+		removeContextMenuNode();
 	});
 
 	document.addEventListener("click", (event) => {
@@ -249,6 +254,23 @@ function openContextMenuNodeFile() {
 	hideNodeContextMenu();
 }
 
+function removeContextMenuNode() {
+	if (!vscodeAPI || !contextMenuNode) {
+		hideNodeContextMenu();
+		return;
+	}
+
+	const id = getNodeId(contextMenuNode);
+	if (id) {
+		vscodeAPI.postMessage({
+			command: "removeNodes",
+			value: { nodeIds: [id] },
+		});
+	}
+
+	hideNodeContextMenu();
+}
+
 function getNodeName(node) {
 	if (typeof node.name === "string" && node.name.length > 0) {
 		return node.name;
@@ -260,4 +282,12 @@ function getNodeName(node) {
 
 	const idParts = node.id.split(".");
 	return idParts[idParts.length - 1];
+}
+
+function getNodeId(node) {
+	if (typeof node.id === "string" && node.id.length > 0) {
+		return node.id;
+	}
+
+	return undefined;
 }

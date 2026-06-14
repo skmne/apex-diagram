@@ -22,14 +22,17 @@ export default class DiagramWorkspaceProvider {
 	private data: DiagrammModel = { nodes: [], links: [] };
 	private diagramWorkspaceWebviewPanel: vscode.WebviewPanel;
 	private onDataChanged?: (data: DiagrammModel) => void | Thenable<void>;
+	private onRemoveNodesRequested?: (nodeIds: string[]) => void | Thenable<void>;
 
 	private constructor(
 		context: vscode.ExtensionContext,
 		initialData: DiagrammModel = new DiagrammModel(),
-		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>
+		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>,
+		onRemoveNodesRequested?: (nodeIds: string[]) => void | Thenable<void>
 	) {
 		this.data = initialData;
 		this.onDataChanged = onDataChanged;
+		this.onRemoveNodesRequested = onRemoveNodesRequested;
 		this.diagramWorkspaceWebviewPanel = vscode.window.createWebviewPanel(
 			"apex-classes-workspace",
 			"Apex Diagram",
@@ -64,6 +67,9 @@ export default class DiagramWorkspaceProvider {
 					case "openClass":
 						await this.openApexClass(message.value);
 						break;
+					case "removeNodes":
+						await this.removeNodesFromWebview(message.value);
+						break;
 					case "layoutChanged":
 						this.updateNodeLayout(message.value);
 						break;
@@ -79,11 +85,19 @@ export default class DiagramWorkspaceProvider {
 	public static newInstance(
 		context: vscode.ExtensionContext,
 		initialData?: DiagrammModel,
-		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>
+		onDataChanged?: (data: DiagrammModel) => void | Thenable<void>,
+		onRemoveNodesRequested?: (nodeIds: string[]) => void | Thenable<void>
 	): DiagramWorkspaceProvider {
 		if (!DiagramWorkspaceProvider.instance) {
-			DiagramWorkspaceProvider.instance = new DiagramWorkspaceProvider(context, initialData, onDataChanged);
+			DiagramWorkspaceProvider.instance = new DiagramWorkspaceProvider(
+				context,
+				initialData,
+				onDataChanged,
+				onRemoveNodesRequested
+			);
 		} else {
+			DiagramWorkspaceProvider.instance.onDataChanged = onDataChanged;
+			DiagramWorkspaceProvider.instance.onRemoveNodesRequested = onRemoveNodesRequested;
 			DiagramWorkspaceProvider.instance.showDiagramWorkspace();
 		}
 		return DiagramWorkspaceProvider.instance;
@@ -262,6 +276,25 @@ export default class DiagramWorkspaceProvider {
 
 		const document = await vscode.workspace.openTextDocument(apexClassFiles[0]);
 		await vscode.window.showTextDocument(document);
+	}
+
+	private async removeNodesFromWebview(value: unknown): Promise<void> {
+		if (!this.isRemoveNodesRequest(value)) {
+			return;
+		}
+
+		await this.onRemoveNodesRequested?.(value.nodeIds);
+	}
+
+	private isRemoveNodesRequest(value: unknown): value is { nodeIds: string[] } {
+		if (!value || typeof value !== "object") {
+			return false;
+		}
+
+		const request = value as { nodeIds?: unknown };
+		return Array.isArray(request.nodeIds)
+			&& request.nodeIds.length > 0
+			&& request.nodeIds.every((id) => typeof id === "string" && id.length > 0);
 	}
 
 	private isApexClassOpenRequest(value: unknown): value is { name: string } {

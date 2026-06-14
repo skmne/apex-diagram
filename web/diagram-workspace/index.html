@@ -104,9 +104,10 @@
 			position: fixed;
 			z-index: 10;
 			min-width: 9rem;
-			padding: 4px;
-			background: var(--vscode-editor-background);
-			border: 1px solid var(--vscode-button-background);
+			padding: 3px;
+			background: var(--vscode-menu-background, var(--vscode-editor-background));
+			border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border, var(--vscode-button-background)));
+			border-radius: 3px;
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 		}
 		.context-menu.hidden {
@@ -115,16 +116,25 @@
 		.context-menu button {
 			width: 100%;
 			min-height: 1.8rem;
-			padding: 4px 8px;
-			background: var(--vscode-button-background);
-			color: var(--vscode-button-foreground);
+			padding: 5px 8px;
+			background: transparent;
+			color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+			border: 1px solid transparent;
 			font-family: var(--vscode-font-family);
 			font-size: var(--vscode-font-size);
 			text-align: left;
 			cursor: pointer;
 		}
-		.context-menu button:hover {
-			background: var(--vscode-button-hoverBackground);
+		.context-menu button + button {
+			margin-top: 3px;
+			border-top-color: var(--vscode-menu-separatorBackground, var(--vscode-panel-border, var(--vscode-button-background)));
+		}
+		.context-menu button:hover,
+		.context-menu button:focus {
+			background: var(--vscode-menu-selectionBackground, var(--vscode-button-hoverBackground));
+			color: var(--vscode-menu-selectionForeground, var(--vscode-button-foreground));
+			border-color: var(--vscode-focusBorder, var(--vscode-button-background));
+			outline: none;
 		}
 	</style>
 
@@ -259,6 +269,7 @@
 		</div>
 		<div id="nodeContextMenu" class="context-menu hidden">
 			<button id="openClassFile" type="button" title="Open Apex class file" aria-label="Open Apex class file">Open file</button>
+			<button id="removeDiagramItem" type="button" title="Remove from diagram" aria-label="Remove from diagram">Remove from diagram</button>
 		</div>
 	</body>
 

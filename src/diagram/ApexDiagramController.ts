@@ -102,6 +102,21 @@ class ApexDiagramController {
 
 	public removeEntry(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[] | undefined): void {
 		const nodesToRemove = selectedNodes ?? [node];
+		this.removeNodesFromDiagram(nodesToRemove);
+	}
+
+	public removeEntriesByIds(nodeIds: string[]): void {
+		const nodesToRemove = this.diagramItemsTreeProvider
+			.getItems()
+			.filter((item) => nodeIds.includes(item.id));
+
+		this.removeNodesFromDiagram(nodesToRemove);
+	}
+
+	private removeNodesFromDiagram(nodesToRemove: ApexClassTreeItem[]): void {
+		if (nodesToRemove.length === 0) {
+			return;
+		}
 
 		nodesToRemove.forEach((item: ApexClassTreeItem) => {
 			this.markAsAvailableApexClass(item);
@@ -152,7 +167,12 @@ class ApexDiagramController {
 	}
 
 	private getDiagramWorkspace(): DiagramWorkspaceProvider {
-		return DiagramWorkspaceProvider.newInstance(this.context, this.diagramDataState, (data) => this.saveDiagramData(data));
+		return DiagramWorkspaceProvider.newInstance(
+			this.context,
+			this.diagramDataState,
+			(data) => this.saveDiagramData(data),
+			(nodeIds) => this.removeEntriesByIds(nodeIds)
+		);
 	}
 
 	private async createDiagramData(
