@@ -19,6 +19,7 @@ diagram.setStyle({
 diagram.build();
 
 bindResize();
+bindDiagramEvents();
 bindWebviewMessages();
 bindToolbar();
 bindKeyboard();
@@ -48,6 +49,19 @@ function getVsCodeApi() {
 
 function bindResize() {
 	window.addEventListener("resize", resizeDiagram, true);
+}
+
+function bindDiagramEvents() {
+	if (!vscodeAPI) {
+		return;
+	}
+
+	diagram.on("layoutChanged", (data) => {
+		vscodeAPI.postMessage({
+			command: "layoutChanged",
+			value: getNodeLayout(data),
+		});
+	});
 }
 
 function resizeDiagram() {
@@ -138,4 +152,14 @@ function exportSvg() {
 function getSVGText() {
 	const serializer = new XMLSerializer();
 	return serializer.serializeToString(svgElement);
+}
+
+function getNodeLayout(data) {
+	return data.nodes
+		.map((node) => ({
+			id: node.id,
+			x: node.x,
+			y: node.y,
+		}))
+		.filter((node) => typeof node.id === "string" && Number.isFinite(node.x) && Number.isFinite(node.y));
 }

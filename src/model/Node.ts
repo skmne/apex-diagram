@@ -4,6 +4,8 @@ export default class Node {
 	public namespace?: string;
 	public id?: string;
 	public name?: string;
+	public x?: number;
+	public y?: number;
 
 	constructor(namespace?: string, name?: string) {
 		this.namespace = namespace;

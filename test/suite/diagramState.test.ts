@@ -31,6 +31,19 @@ suite("diagramState", () => {
 		});
 	});
 
+	test("saves and restores node coordinates", async () => {
+		const workspaceState = new MemoryMemento();
+		const data = new DiagrammModel();
+		const node = new Node("pkg", "InvoiceService");
+		node.x = 120;
+		node.y = 80;
+		data.nodes = [node];
+
+		await saveDiagramData(contextWith(workspaceState), data);
+
+		assert.deepStrictEqual(getStoredDiagramData(contextWith(workspaceState)).nodes, [node]);
+	});
+
 	test("normalizes older partial state shapes", async () => {
 		const workspaceState = new MemoryMemento();
 		await workspaceState.update(DIAGRAM_STATE_KEY, { nodes: [new Node("", "InvoiceService")] });

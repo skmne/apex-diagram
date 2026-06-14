@@ -5,6 +5,18 @@ import * as crypto from "crypto";
 import { DiagrammModel } from "../model/DiagrammModel";
 import Node from "../model/Node";
 
+type WebviewMessage = {
+	command: string;
+	text?: string;
+	value?: unknown;
+};
+
+type NodeLayout = {
+	id: string;
+	x: number;
+	y: number;
+};
+
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;
 	private data: DiagrammModel = { nodes: [], links: [] };
@@ -38,13 +50,16 @@ export default class DiagramWorkspaceProvider {
 		this.diagramWorkspaceWebviewPanel.webview.html = this.getWebviewContent(context);
 
 		this.diagramWorkspaceWebviewPanel.webview.onDidReceiveMessage(
-			async (message: { command: string; text?: string }) => {
+			async (message: WebviewMessage) => {
 				switch (message.command) {
 					case "ready":
 						this.restoreDiagram();
 						break;
 					case "export":
 						await this.exportDiagram(message.text);
+						break;
+					case "layoutChanged":
+						this.updateNodeLayout(message.value);
 						break;
 				}
 			},
@@ -222,6 +237,44 @@ export default class DiagramWorkspaceProvider {
 
 	private notifyDataChanged(): void {
 		this.onDataChanged?.(this.data);
+	}
+
+	private updateNodeLayout(value: unknown): void {
+		if (!this.isNodeLayoutArray(value)) {
+			return;
+		}
+
+		const layoutById = new Map(value.map((node) => [node.id, node]));
+		let hasChanges = false;
+
+		this.data.nodes = this.data.nodes.map((node) => {
+			const layout = node.id ? layoutById.get(node.id) : undefined;
+			if (!layout || (node.x === layout.x && node.y === layout.y)) {
+				return node;
+			}
+
+			hasChanges = true;
+			return { ...node, x: layout.x, y: layout.y };
+		});
+
+		if (hasChanges) {
+			this.notifyDataChanged();
+		}
+	}
+
+	private isNodeLayoutArray(value: unknown): value is NodeLayout[] {
+		return Array.isArray(value) && value.every((item) => {
+			if (!item || typeof item !== "object") {
+				return false;
+			}
+
+			const layout = item as Partial<NodeLayout>;
+			return typeof layout.id === "string"
+				&& typeof layout.x === "number"
+				&& Number.isFinite(layout.x)
+				&& typeof layout.y === "number"
+				&& Number.isFinite(layout.y);
+		});
 	}
 
 	private mergeLinks(currentLinks: DiagrammModel["links"], newLinks: DiagrammModel["links"]): DiagrammModel["links"] {
