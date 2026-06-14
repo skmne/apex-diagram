@@ -7,6 +7,12 @@ const nodeContextMenuElement = getHTMLElement("nodeContextMenu");
 const openClassFileElement = getHTMLElement("openClassFile");
 const vscodeAPI = getVsCodeApi();
 let contextMenuNode;
+const printExportStyle = {
+	background: "#ffffff",
+	nodeForeground: "#111111",
+	nodeBackground: "#ffffff",
+	fontColor: "#111111",
+};
 
 resizeDiagram();
 
@@ -175,8 +181,7 @@ function exportSvg() {
 }
 
 function getSVGText() {
-	const serializer = new XMLSerializer();
-	return serializer.serializeToString(svgElement);
+	return diagram.exportSvg(printExportStyle);
 }
 
 function getNodeLayout(data) {
