@@ -29,15 +29,7 @@ Suggested assets:
 - `images/apex-diagram-add-classes.gif`: show selecting one or more Apex classes and adding them to the diagram.
 - `images/apex-diagram-export.gif`: show exporting the diagram to SVG.
 
-```md
-![Apex Diagram activity bar](images/apex-diagram-activity-bar.png)
-
-![Apex Diagram workspace](images/apex-diagram-workspace.png)
-
-![Adding Apex classes to a diagram](images/apex-diagram-add-classes.gif)
-
-![Exporting a diagram as SVG](images/apex-diagram-export.gif)
-```
+When the assets are ready, add them here as Markdown images with short alt text.
 
 ## Requirements
 
