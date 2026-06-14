@@ -65,10 +65,10 @@ class ToolingApi extends BaseAPI {
 		let query = `
     		SELECT Id, NamespacePrefix, Name, Body, LastModifiedDate
    		 	FROM ApexClass
-    	`;
+		`;
 
 		const apexClassNameConditions = apexClassNames.map((item: string) => {
-			return "'" + item + "'";
+			return "'" + this.escapeSingleQuotes(item) + "'";
 		});
 		query += ` WHERE Name IN (${apexClassNameConditions.join(",")})`;
 
@@ -79,7 +79,7 @@ class ToolingApi extends BaseAPI {
 
 	public async getContainerAsyncRequest(asyncReqId: string) {
 		return this.query(
-			`SELECT Id, State, ErrorMsg, IsCheckOnly FROM ContainerAsyncRequest WHERE Id=\'${asyncReqId}\'`
+			`SELECT Id, State, ErrorMsg, IsCheckOnly FROM ContainerAsyncRequest WHERE Id=\'${this.escapeSingleQuotes(asyncReqId)}\'`
 		);
 	}
 
@@ -128,7 +128,7 @@ class ToolingApi extends BaseAPI {
 			`
 				SELECT Id, SymbolTable, LastSyncDate
 				FROM ApexClassMember
-				WHERE MetadataContainerId = \'${metadataContainerId}\'
+				WHERE MetadataContainerId = \'${this.escapeSingleQuotes(metadataContainerId)}\'
 			`
 		);
 	}
@@ -178,6 +178,10 @@ class ToolingApi extends BaseAPI {
 
 	private isLikelyTestClassName(name: string): boolean {
 		return /(^test|tests?$|_tests?$|tests?_)/i.test(name);
+	}
+
+	private escapeSingleQuotes(value: string): string {
+		return value.replace(/'/g, "\\'");
 	}
 }
 export { ToolingApi };
