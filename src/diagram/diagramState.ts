@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { DiagrammModel } from "./DiagrammModel";
+import { DiagrammModel } from "../model/DiagrammModel";
 
 const DIAGRAM_STATE_KEY = "apexDiagram.diagramState";
 

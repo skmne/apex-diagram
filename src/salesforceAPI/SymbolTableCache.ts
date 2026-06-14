@@ -2,7 +2,7 @@ import * as crypto from "crypto";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { Memento, Uri } from "vscode";
-import { getApexClassKey } from "../apexClassKey";
+import { getApexClassKey } from "../model/apexClassKey";
 import { ApexClass, ApexClassWithBody } from "./ApexClass";
 import { ApexClassMember } from "./ApexClassMember";
 import { SYMBOL_TABLE_CACHE_DIR, SYMBOL_TABLE_CACHE_KEY_PREFIX } from "./salesforceConstants";

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { getApexClassKey } from "./apexClassKey";
-import { ApexClass } from "./salesforceAPI/ApexClass";
+import { getApexClassKey } from "../model/apexClassKey";
+import { ApexClass } from "../salesforceAPI/ApexClass";
 
 export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexClassTreeItem> {
 	constructor(

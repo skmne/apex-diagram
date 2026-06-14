@@ -1,13 +1,15 @@
 # Repository Guide
 
-This project is a VS Code extension that builds Apex class dependency diagrams. The extension host code is TypeScript under `src/`, and the diagram webview is plain JavaScript under `web/diagram-workspace/` bundled by webpack into `dist/webview/bundle.js`.
+This project is a VS Code extension that builds Apex class dependency diagrams. The extension host code is TypeScript under `src/`, unit tests live under `test/`, and the diagram webview is plain JavaScript under `web/diagram-workspace/` bundled by webpack into `dist/webview/bundle.js`.
 
 ## Main Areas
 
-- `src/extension.ts`: activation flow, tree views, VS Code commands, Salesforce auth/data loading, and diagram updates.
-- `src/dependencyAnalyzer.ts`: converts Salesforce Apex `SymbolTable` data into `DiagrammModel` nodes and links.
-- `src/DiagramWorkspaceProvider.ts`: owns the singleton VS Code webview panel and message passing.
-- `src/salesforceAPI/`: Tooling API models and Salesforce client code.
+- `src/extension.ts`: activation entrypoint, workspace detection, Salesforce data bootstrap, and registration handoff.
+- `src/diagram/`: diagram controller, webview provider, command/view registration, diagram state, and cache-clear command helpers.
+- `src/tree/`: VS Code tree data provider and tree items for Apex class lists.
+- `src/model/`: diagram model primitives (`Node`, `Link`, `DiagrammModel`) and Apex class key helpers.
+- `src/analyzer/`: converts Salesforce Apex `SymbolTable` data into `DiagrammModel` nodes and links.
+- `src/salesforceAPI/`: Tooling API models, Salesforce client, symbol table generation orchestration, and symbol table cache.
 - `src/sfdx/`: Salesforce CLI/user-info helpers.
 - `web/diagram-workspace/index.js`: webview diagram UI using `@alesik/uml-diagram`.
 - `web/diagram-workspace/index.html`: webview template loaded by `DiagramWorkspaceProvider`.
@@ -21,9 +23,7 @@ This project is a VS Code extension that builds Apex class dependency diagrams. 
 - `npm run watch:webview`: watch webview bundle compilation.
 - `npm run lint`: lint `src/**/*.ts`.
 - `npm test`: compile, lint, then run VS Code extension tests.
-- `npm run test:unit`: compile TypeScript and run selected Mocha unit tests from `out/test/suite/`.
-
-Note: `npm run test:unit` currently references `out/test/suite/salesforceClient.test.js`; verify a matching source test exists before relying on this command.
+- `npm run test:unit`: compile production and test TypeScript with `tsconfig.test.json`, then run selected Mocha unit tests from `out-test/test/suite/`.
 
 ## Coding Conventions
 
@@ -32,6 +32,7 @@ Note: `npm run test:unit` currently references `out/test/suite/salesforceClient.
 - Keep webview code in plain JavaScript unless the build pipeline is intentionally changed.
 - Prefer existing model classes (`Node`, `Link`, `DiagrammModel`) over introducing parallel shapes.
 - Preserve VS Code API boundaries: extension-host file system access belongs in TypeScript; browser DOM/export behavior belongs in `web/diagram-workspace/`.
+- Keep new extension-host modules in the semantic folders above instead of adding more root-level `src/*.ts` files, unless the file is an entrypoint.
 - Use ASCII for new files unless the file already uses another encoding intentionally.
 
 ## Dependency Analysis Notes
@@ -57,7 +58,7 @@ Note: `npm run test:unit` currently references `out/test/suite/salesforceClient.
 
 ## Testing Guidance
 
-- For analyzer/model changes, prefer focused unit tests under `src/test/suite/`.
+- For analyzer/model changes, prefer focused unit tests under `test/suite/`.
 - For extension activation, Salesforce, or VS Code command behavior, expect tests to need the VS Code test runner and possibly mocks around external Salesforce/SFDX calls.
 - Run `npm run compile` after TypeScript or webview changes. Run `npm run lint` when touching `src/**/*.ts`.
 

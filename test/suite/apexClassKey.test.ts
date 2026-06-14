@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { getApexClassKey } from "../../apexClassKey";
+import { getApexClassKey } from "../../src/model/apexClassKey";
 
 suite("getApexClassKey", () => {
 	test("uses namespace-qualified keys only when namespace is present", () => {

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ApexClassTreeItem } from "./ApexClassTreeDataProvider";
+import { ApexClassTreeItem } from "../tree/ApexClassTreeDataProvider";
 import { ApexDiagramController } from "./ApexDiagramController";
 
 function registerApexDiagramCommands(controller: ApexDiagramController): vscode.Disposable[] {

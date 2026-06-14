@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { ApexDiagramController } from "./ApexDiagramController";
-import { registerApexDiagramCommands } from "./registerApexDiagramCommands";
-import { registerApexClassTreeViews } from "./registerApexClassTreeViews";
+import { ApexDiagramController } from "./diagram/ApexDiagramController";
+import { registerApexDiagramCommands } from "./diagram/registerApexDiagramCommands";
+import { registerApexClassTreeViews } from "./diagram/registerApexClassTreeViews";
 import { ApexClass } from "./salesforceAPI/ApexClass";
 import { ToolingApi } from "./salesforceAPI/salesforceClient";
 import { getSalesforceUserInfo } from "./sfdx/sfdx";

@@ -1,9 +1,9 @@
-import { DiagrammModel } from "./DiagrammModel";
-import { Link } from "./Link";
-import Node from "./Node";
-import { getApexClassKey } from "./apexClassKey";
-import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
-import { SymbolTable } from "./salesforceAPI/SymbolTable";
+import { DiagrammModel } from "../model/DiagrammModel";
+import { Link } from "../model/Link";
+import Node from "../model/Node";
+import { getApexClassKey } from "../model/apexClassKey";
+import { ApexClassMember } from "../salesforceAPI/ApexClassMember";
+import { SymbolTable } from "../salesforceAPI/SymbolTable";
 
 type KeyMap = Record<string, { key: string; symbolTable: SymbolTable }>;
 

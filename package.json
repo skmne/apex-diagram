@@ -139,7 +139,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src/",
     "test": "vscode-test",
-    "test:unit": "tsc -p ./ && mocha --ui tdd out/test/suite/apexClassKey.test.js out/test/suite/node.test.js out/test/suite/link.test.js out/test/suite/diagramState.test.js out/test/suite/dependencyAnalyzer.test.js out/test/suite/SymbolTableCache.test.js"
+    "test:unit": "tsc -p ./tsconfig.test.json && mocha --ui tdd out-test/test/suite/apexClassKey.test.js out-test/test/suite/node.test.js out-test/test/suite/link.test.js out-test/test/suite/diagramState.test.js out-test/test/suite/dependencyAnalyzer.test.js out-test/test/suite/SymbolTableCache.test.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",

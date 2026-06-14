@@ -1,9 +1,9 @@
 import * as assert from "assert";
 import type * as vscode from "vscode";
-import { DiagrammModel } from "../../DiagrammModel";
-import { getStoredDiagramData, saveDiagramData } from "../../diagramState";
-import { Link } from "../../Link";
-import Node from "../../Node";
+import { DiagrammModel } from "../../src/model/DiagrammModel";
+import { getStoredDiagramData, saveDiagramData } from "../../src/diagram/diagramState";
+import { Link } from "../../src/model/Link";
+import Node from "../../src/model/Node";
 import { MemoryMemento } from "./testDoubles";
 
 const DIAGRAM_STATE_KEY = "apexDiagram.diagramState";

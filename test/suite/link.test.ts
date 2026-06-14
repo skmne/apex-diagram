@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { Link } from "../../Link";
+import { Link } from "../../src/model/Link";
 
 suite("Link", () => {
 	test("should set source, target, and type", () => {

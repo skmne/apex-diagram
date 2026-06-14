@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
-import { DiagrammModel } from "./DiagrammModel";
-import Node from "./Node";
+import { DiagrammModel } from "../model/DiagrammModel";
+import Node from "../model/Node";
 
 export default class DiagramWorkspaceProvider {
 	private static instance: DiagramWorkspaceProvider | null = null;

@@ -3,10 +3,10 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
 import type { Uri } from "vscode";
-import { ApexClassWithBody } from "../../salesforceAPI/ApexClass";
-import { ApexClassMember } from "../../salesforceAPI/ApexClassMember";
-import { SYMBOL_TABLE_CACHE_KEY_PREFIX } from "../../salesforceAPI/salesforceConstants";
-import { SymbolTableCache } from "../../salesforceAPI/SymbolTableCache";
+import { ApexClassWithBody } from "../../src/salesforceAPI/ApexClass";
+import { ApexClassMember } from "../../src/salesforceAPI/ApexClassMember";
+import { SYMBOL_TABLE_CACHE_KEY_PREFIX } from "../../src/salesforceAPI/salesforceConstants";
+import { SymbolTableCache } from "../../src/salesforceAPI/SymbolTableCache";
 import { MemoryMemento } from "./testDoubles";
 
 function apexClass(name: string, lastModifiedDate: Date, namespace = ""): ApexClassWithBody {

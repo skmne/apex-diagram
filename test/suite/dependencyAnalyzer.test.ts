@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import { parseDependency } from "../../dependencyAnalyzer";
-import { ApexClassMember } from "../../salesforceAPI/ApexClassMember";
+import { parseDependency } from "../../src/analyzer/dependencyAnalyzer";
+import { ApexClassMember } from "../../src/salesforceAPI/ApexClassMember";
 
 type Ref = { name: string; namespace?: string };
 

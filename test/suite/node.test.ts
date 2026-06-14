@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import Node from "../../Node";
+import Node from "../../src/model/Node";
 
 suite("Node", () => {
 	test("should set name and namespace", () => {

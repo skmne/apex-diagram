@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import { ApexClassTreeDataProvider, ApexClassTreeItem } from "./ApexClassTreeDataProvider";
-import { DiagrammModel } from "./DiagrammModel";
+import { ApexClassTreeDataProvider, ApexClassTreeItem } from "../tree/ApexClassTreeDataProvider";
+import { DiagrammModel } from "../model/DiagrammModel";
 import DiagramWorkspaceProvider from "./DiagramWorkspaceProvider";
-import { getApexClassKey } from "./apexClassKey";
-import { parseDependency } from "./dependencyAnalyzer";
+import { getApexClassKey } from "../model/apexClassKey";
+import { parseDependency } from "../analyzer/dependencyAnalyzer";
 import { getStoredDiagramData, saveDiagramData } from "./diagramState";
-import { ApexClass } from "./salesforceAPI/ApexClass";
-import { ApexClassMember } from "./salesforceAPI/ApexClassMember";
-import { ToolingApi } from "./salesforceAPI/salesforceClient";
+import { ApexClass } from "../salesforceAPI/ApexClass";
+import { ApexClassMember } from "../salesforceAPI/ApexClassMember";
+import { ToolingApi } from "../salesforceAPI/salesforceClient";
 import { clearSymbolTableCache } from "./symbolTableCacheCommands";
 
 type DiagramProgress = vscode.Progress<{ message?: string }>;
