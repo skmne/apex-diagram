@@ -168,7 +168,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@alesik/uml-diagram": "^0.2.1",
+    "@alesik/uml-diagram": "^0.2.2",
     "jsforce": "^3.10.14"
   }
 }
