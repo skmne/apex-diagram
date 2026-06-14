@@ -1,12 +1,40 @@
 {
   "name": "apex-diagram",
-  "displayName": "apex-diagram",
-  "description": "Apex diagram generates UML class diagram based on the apex code",
+  "displayName": "Apex Diagram",
+  "description": "Visualize Salesforce Apex class dependencies as an interactive UML-style diagram.",
   "version": "0.0.1",
+  "publisher": "skmne94",
+  "author": "Aliaksandr Lesik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skmne/apex-diagram.git"
+  },
+  "homepage": "https://github.com/skmne/apex-diagram#readme",
+  "bugs": {
+    "url": "https://github.com/skmne/apex-diagram/issues"
+  },
+  "keywords": [
+    "apex",
+    "salesforce",
+    "uml",
+    "diagram",
+    "dependencies",
+    "dependency-graph",
+    "tooling-api",
+    "sfdx",
+    "visualization"
+  ],
+  "galleryBanner": {
+    "color": "#1f6feb",
+    "theme": "dark"
+  },
+  "preview": true,
   "engines": {
     "vscode": "^1.96.0"
   },
   "categories": [
+    "Visualization",
     "Other"
   ],
   "activationEvents": [],
