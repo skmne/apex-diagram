@@ -217,6 +217,7 @@ export default class DiagramWorkspaceProvider {
 
 	private async exportDiagram(svgText?: string): Promise<void> {
 		const fileInfo = await vscode.window.showSaveDialog({
+			defaultUri: vscode.Uri.file("apex-diagram.svg"),
 			saveLabel: "Save Apex Diagram",
 			filters: {
 				// eslint-disable-next-line @typescript-eslint/naming-convention
