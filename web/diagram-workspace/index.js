@@ -5,6 +5,7 @@ const containerElement = getHTMLElement("container");
 const svgElement = getHTMLElement("uml-diagram");
 const nodeContextMenuElement = getHTMLElement("nodeContextMenu");
 const openClassFileElement = getHTMLElement("openClassFile");
+const showSourceElement = getHTMLElement("showSource");
 const vscodeAPI = getVsCodeApi();
 let contextMenuNode;
 const printExportStyle = {
@@ -146,6 +147,17 @@ function bindToolbar() {
 			exportSvg();
 		}
 	});
+
+	showSourceElement.addEventListener("click", () => {
+		if (vscodeAPI) {
+			vscodeAPI.postMessage({
+				command: "showSource",
+				value: diagram.getData(),
+			});
+		} else {
+			showSource();
+		}
+	});
 }
 
 function bindKeyboard() {
@@ -182,6 +194,16 @@ function exportSvg() {
 
 function getSVGText() {
 	return diagram.exportSvg(printExportStyle);
+}
+
+function showSource() {
+	const source = JSON.stringify(diagram.getData(), null, 2);
+	const blob = new Blob([source], { type: "application/json;charset=utf-8" });
+
+	const link = document.createElement("a");
+	link.href = URL.createObjectURL(blob);
+	link.download = "apex-diagram-source.json";
+	link.click();
 }
 
 function getNodeLayout(data) {

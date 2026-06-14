@@ -58,6 +58,9 @@ export default class DiagramWorkspaceProvider {
 					case "export":
 						await this.exportDiagram(message.text);
 						break;
+					case "showSource":
+						await this.showDiagramSource(message.value);
+						break;
 					case "openClass":
 						await this.openApexClass(message.value);
 						break;
@@ -221,6 +224,27 @@ export default class DiagramWorkspaceProvider {
 		if (selectedButton === "Open") {
 			await vscode.env.openExternal(fileInfo);
 		}
+	}
+
+	private async showDiagramSource(value: unknown): Promise<void> {
+		if (!this.isDiagramSource(value)) {
+			return;
+		}
+
+		const document = await vscode.workspace.openTextDocument({
+			content: JSON.stringify(value, null, 2),
+			language: "json",
+		});
+		await vscode.window.showTextDocument(document, { preview: false });
+	}
+
+	private isDiagramSource(value: unknown): value is { nodes: unknown[]; links: unknown[] } {
+		if (!value || typeof value !== "object") {
+			return false;
+		}
+
+		const source = value as { nodes?: unknown; links?: unknown };
+		return Array.isArray(source.nodes) && Array.isArray(source.links);
 	}
 
 	private async openApexClass(value: unknown): Promise<void> {
