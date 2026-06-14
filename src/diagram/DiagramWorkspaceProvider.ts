@@ -170,7 +170,7 @@ export default class DiagramWorkspaceProvider {
 			"default-src 'none'",
 			`img-src ${this.diagramWorkspaceWebviewPanel.webview.cspSource} data:`,
 			`style-src ${this.diagramWorkspaceWebviewPanel.webview.cspSource} 'unsafe-inline'`,
-			`script-src 'nonce-${nonce}' 'unsafe-eval'`,
+			`script-src 'nonce-${nonce}'`,
 		].join("; ");
 		html = html
 			.replace("{{csp}}", csp)
