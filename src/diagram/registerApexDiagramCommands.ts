@@ -31,12 +31,12 @@ function registerApexDiagramCommands(controller: ApexDiagramController): vscode.
 				))
 		),
 		vscode.commands.registerCommand(
-			"active-apex-classes-view.removeEntry",
+			"diagram-items-view.removeEntry",
 			(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {
 				controller.removeEntry(node, selectedNodes);
 			}
 		),
-		vscode.commands.registerCommand("active-apex-classes-view.openClass", (node: ApexClassTreeItem) => {
+		vscode.commands.registerCommand("diagram-items-view.openFile", (node: ApexClassTreeItem) => {
 			return runWithErrorMessage(() => controller.openApexClass(node));
 		}),
 		vscode.commands.registerCommand("apex-classes-view.openWorkspace", () => controller.openWorkspace()),

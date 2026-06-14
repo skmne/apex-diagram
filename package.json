@@ -30,8 +30,8 @@
     "views": {
       "apex-classes-bar": [
         {
-          "id": "active-apex-classes-view",
-          "name": "Active Apex Classes",
+          "id": "diagram-items-view",
+          "name": "Diagram Items",
           "contextualTitle": "Apex Diagram",
           "visibility": "collapsed"
         },
@@ -78,13 +78,13 @@
         "icon": "$(add)"
       },
       {
-        "command": "active-apex-classes-view.removeEntry",
+        "command": "diagram-items-view.removeEntry",
         "title": "Remove",
         "icon": "$(remove)"
       },
       {
-        "command": "active-apex-classes-view.openClass",
-        "title": "Open Apex Class",
+        "command": "diagram-items-view.openFile",
+        "title": "Open File",
         "icon": "$(go-to-file)"
       }
     ],
@@ -107,7 +107,7 @@
         },
         {
           "command": "diagram-workspace.clear",
-          "when": "view == active-apex-classes-view",
+          "when": "view == diagram-items-view",
           "group": "navigation"
         }
       ],
@@ -118,13 +118,13 @@
           "group": "inline"
         },
         {
-          "command": "active-apex-classes-view.removeEntry",
-          "when": "view == active-apex-classes-view && viewItem == remove_context",
+          "command": "diagram-items-view.removeEntry",
+          "when": "view == diagram-items-view && viewItem == remove_context",
           "group": "inline@2"
         },
         {
-          "command": "active-apex-classes-view.openClass",
-          "when": "view == active-apex-classes-view && viewItem == remove_context",
+          "command": "diagram-items-view.openFile",
+          "when": "view == diagram-items-view && viewItem == remove_context",
           "group": "inline@1"
         }
       ]

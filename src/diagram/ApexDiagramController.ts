@@ -14,10 +14,10 @@ type DiagramProgress = vscode.Progress<{ message?: string }>;
 
 class ApexDiagramController {
 	public readonly apexClassesTreeProvider: ApexClassTreeDataProvider;
-	public readonly activeApexClassesTreeProvider: ApexClassTreeDataProvider;
+	public readonly diagramItemsTreeProvider: ApexClassTreeDataProvider;
 
 	private readonly apexClassesIcon = new vscode.ThemeIcon("file");
-	private readonly activeApexClassesIcon = new vscode.ThemeIcon("symbol-class");
+	private readonly diagramItemIcon = new vscode.ThemeIcon("symbol-class");
 	private diagramDataState: DiagrammModel;
 
 	constructor(
@@ -27,33 +27,33 @@ class ApexDiagramController {
 		apexClasses: ApexClass[]
 	) {
 		this.diagramDataState = getStoredDiagramData(context);
-		const restoredActiveIds = new Set(
+		const restoredDiagramItemIds = new Set(
 			this.diagramDataState.nodes
 				.map((node) => node.id)
 				.filter((id): id is string => Boolean(id))
 		);
-		const restoredActiveApexClasses = apexClasses.filter((apexClass) =>
-			restoredActiveIds.has(this.getApexClassId(apexClass))
+		const restoredDiagramItems = apexClasses.filter((apexClass) =>
+			restoredDiagramItemIds.has(this.getApexClassId(apexClass))
 		);
 		const inactiveApexClasses = apexClasses.filter((apexClass) =>
-			!restoredActiveIds.has(this.getApexClassId(apexClass))
+			!restoredDiagramItemIds.has(this.getApexClassId(apexClass))
 		);
 
 		this.apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, inactiveApexClasses, this.apexClassesIcon);
-		this.activeApexClassesTreeProvider = new ApexClassTreeDataProvider(
+		this.diagramItemsTreeProvider = new ApexClassTreeDataProvider(
 			rootPath,
-			restoredActiveApexClasses,
-			this.activeApexClassesIcon
+			restoredDiagramItems,
+			this.diagramItemIcon
 		);
-		this.activeApexClassesTreeProvider.getItems().forEach((node) => this.markAsActiveNode(node));
+		this.diagramItemsTreeProvider.getItems().forEach((node) => this.markAsDiagramItem(node));
 	}
 
 	public async refreshApexClasses(progress: DiagramProgress): Promise<void> {
 		progress.report({ message: "Refreshing Apex classes" });
 		const freshApexClasses = await this.tooling.getApexClasses();
-		const activeIds = new Set(this.activeApexClassesTreeProvider.getItemIds());
+		const diagramItemIds = new Set(this.diagramItemsTreeProvider.getItemIds());
 		this.apexClassesTreeProvider.updateApexClasses(
-			freshApexClasses.filter((apexClass) => !activeIds.has(this.getApexClassId(apexClass)))
+			freshApexClasses.filter((apexClass) => !diagramItemIds.has(this.getApexClassId(apexClass)))
 		);
 	}
 
@@ -81,7 +81,7 @@ class ApexDiagramController {
 		}
 
 		const diagramData = await this.createDiagramData(diagramWorkspace, newNodes, progress);
-		this.moveNodesToActiveList(newNodes);
+		this.moveNodesToDiagramItems(newNodes);
 		diagramWorkspace.addNodes(diagramData);
 	}
 
@@ -93,21 +93,21 @@ class ApexDiagramController {
 			item.iconPath = this.apexClassesIcon;
 		});
 		const nodeIds = nodesToRemove.map((item: ApexClassTreeItem) => item.id);
-		this.activeApexClassesTreeProvider.remove(nodeIds);
+		this.diagramItemsTreeProvider.remove(nodeIds);
 		this.apexClassesTreeProvider.add(nodesToRemove);
 
 		this.getDiagramWorkspace().removeNodes(nodeIds);
 	}
 
 	public clearWorkspaceDiagram(): void {
-		const activeNodes = this.activeApexClassesTreeProvider.getItems();
-		activeNodes.forEach((node) => {
+		const diagramItems = this.diagramItemsTreeProvider.getItems();
+		diagramItems.forEach((node) => {
 			node.contextValue = "add_context";
 			node.iconPath = this.apexClassesIcon;
 		});
 
-		this.activeApexClassesTreeProvider.remove(activeNodes.map((node) => node.id));
-		this.apexClassesTreeProvider.add(activeNodes);
+		this.diagramItemsTreeProvider.remove(diagramItems.map((node) => node.id));
+		this.apexClassesTreeProvider.add(diagramItems);
 		DiagramWorkspaceProvider.getInstance()?.clear();
 		this.saveDiagramData(new DiagrammModel());
 	}
@@ -159,11 +159,11 @@ class ApexDiagramController {
 		return newData;
 	}
 
-	private moveNodesToActiveList(nodes: ApexClassTreeItem[]): void {
-		nodes.forEach((node) => this.markAsActiveNode(node));
+	private moveNodesToDiagramItems(nodes: ApexClassTreeItem[]): void {
+		nodes.forEach((node) => this.markAsDiagramItem(node));
 
 		const nodeIds = nodes.map((item: ApexClassTreeItem) => item.id);
-		this.activeApexClassesTreeProvider.add(nodes);
+		this.diagramItemsTreeProvider.add(nodes);
 		this.apexClassesTreeProvider.remove(nodeIds);
 	}
 
@@ -179,9 +179,9 @@ class ApexDiagramController {
 		return this.tooling.generateApexSymbolTable(apexClassNames);
 	}
 
-	private markAsActiveNode(node: ApexClassTreeItem): void {
+	private markAsDiagramItem(node: ApexClassTreeItem): void {
 		node.contextValue = "remove_context";
-		node.iconPath = this.activeApexClassesIcon;
+		node.iconPath = this.diagramItemIcon;
 	}
 
 	private saveDiagramData(data: DiagrammModel): Thenable<void> {

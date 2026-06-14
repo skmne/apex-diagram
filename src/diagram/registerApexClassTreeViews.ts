@@ -7,8 +7,8 @@ function registerApexClassTreeViews(controller: ApexDiagramController): vscode.D
 			treeDataProvider: controller.apexClassesTreeProvider,
 			canSelectMany: true,
 		}),
-		vscode.window.createTreeView("active-apex-classes-view", {
-			treeDataProvider: controller.activeApexClassesTreeProvider,
+		vscode.window.createTreeView("diagram-items-view", {
+			treeDataProvider: controller.diagramItemsTreeProvider,
 			canSelectMany: true,
 		}),
 	];
