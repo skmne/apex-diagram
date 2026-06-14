@@ -18,6 +18,8 @@ class ApexDiagramController {
 
 	private readonly apexClassesIcon = new vscode.ThemeIcon("file");
 	private readonly diagramItemIcon = new vscode.ThemeIcon("symbol-class");
+	private readonly loadingIcon = new vscode.ThemeIcon("sync~spin");
+	private readonly addingNodeIds = new Set<string>();
 	private diagramDataState: DiagrammModel;
 
 	constructor(
@@ -70,7 +72,7 @@ class ApexDiagramController {
 		selectedNodes: ApexClassTreeItem[] | undefined,
 		progress: DiagramProgress
 	): Promise<void> {
-		const nodesToAdd = selectedNodes ?? [node];
+		const nodesToAdd = (selectedNodes ?? [node]).filter((item) => !this.addingNodeIds.has(item.id));
 		progress.report({ message: "Loading Apex class details..." });
 
 		const diagramWorkspace = this.getDiagramWorkspace();
@@ -80,17 +82,29 @@ class ApexDiagramController {
 			return;
 		}
 
-		const diagramData = await this.createDiagramData(diagramWorkspace, newNodes, progress);
-		this.moveNodesToDiagramItems(newNodes);
-		diagramWorkspace.addNodes(diagramData);
+		this.markNodesAsLoading(newNodes);
+		let addedToDiagram = false;
+
+		try {
+			const diagramData = await this.createDiagramData(diagramWorkspace, newNodes, progress);
+			this.moveNodesToDiagramItems(newNodes);
+			diagramWorkspace.addNodes(diagramData);
+			addedToDiagram = true;
+		} finally {
+			newNodes.forEach((item) => this.addingNodeIds.delete(item.id));
+
+			if (!addedToDiagram) {
+				newNodes.forEach((item) => this.markAsAvailableApexClass(item));
+				this.apexClassesTreeProvider.refreshItems(newNodes);
+			}
+		}
 	}
 
 	public removeEntry(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[] | undefined): void {
 		const nodesToRemove = selectedNodes ?? [node];
 
 		nodesToRemove.forEach((item: ApexClassTreeItem) => {
-			item.contextValue = "add_context";
-			item.iconPath = this.apexClassesIcon;
+			this.markAsAvailableApexClass(item);
 		});
 		const nodeIds = nodesToRemove.map((item: ApexClassTreeItem) => item.id);
 		this.diagramItemsTreeProvider.remove(nodeIds);
@@ -102,8 +116,7 @@ class ApexDiagramController {
 	public clearWorkspaceDiagram(): void {
 		const diagramItems = this.diagramItemsTreeProvider.getItems();
 		diagramItems.forEach((node) => {
-			node.contextValue = "add_context";
-			node.iconPath = this.apexClassesIcon;
+			this.markAsAvailableApexClass(node);
 		});
 
 		this.diagramItemsTreeProvider.remove(diagramItems.map((node) => node.id));
@@ -182,6 +195,20 @@ class ApexDiagramController {
 	private markAsDiagramItem(node: ApexClassTreeItem): void {
 		node.contextValue = "remove_context";
 		node.iconPath = this.diagramItemIcon;
+	}
+
+	private markNodesAsLoading(nodes: ApexClassTreeItem[]): void {
+		nodes.forEach((node) => {
+			this.addingNodeIds.add(node.id);
+			node.contextValue = "loading_context";
+			node.iconPath = this.loadingIcon;
+		});
+		this.apexClassesTreeProvider.refreshItems(nodes);
+	}
+
+	private markAsAvailableApexClass(node: ApexClassTreeItem): void {
+		node.contextValue = "add_context";
+		node.iconPath = this.apexClassesIcon;
 	}
 
 	private saveDiagramData(data: DiagrammModel): Thenable<void> {

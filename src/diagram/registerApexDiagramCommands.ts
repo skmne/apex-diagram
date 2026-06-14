@@ -30,6 +30,7 @@ function registerApexDiagramCommands(controller: ApexDiagramController): vscode.
 					(progress) => controller.addEntry(node, selectedNodes, progress)
 				))
 		),
+		vscode.commands.registerCommand("apex-classes-view.addEntry.loading", () => undefined),
 		vscode.commands.registerCommand(
 			"diagram-items-view.removeEntry",
 			(node: ApexClassTreeItem, selectedNodes: ApexClassTreeItem[]) => {

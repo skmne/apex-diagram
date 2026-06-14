@@ -78,6 +78,11 @@
         "icon": "$(add)"
       },
       {
+        "command": "apex-classes-view.addEntry.loading",
+        "title": "Adding",
+        "icon": "$(sync~spin)"
+      },
+      {
         "command": "diagram-items-view.removeEntry",
         "title": "Remove",
         "icon": "$(remove)"
@@ -115,6 +120,11 @@
         {
           "command": "apex-classes-view.addEntry",
           "when": "view == apex-classes-view && viewItem == add_context",
+          "group": "inline"
+        },
+        {
+          "command": "apex-classes-view.addEntry.loading",
+          "when": "view == apex-classes-view && viewItem == loading_context",
           "group": "inline"
         },
         {
