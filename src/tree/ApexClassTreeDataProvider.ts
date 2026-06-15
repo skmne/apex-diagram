@@ -6,7 +6,7 @@ export class ApexClassTreeDataProvider implements vscode.TreeDataProvider<ApexCl
 	constructor(
 		private workspaceRoot: string,
 		private apexClassMembers: ApexClass[],
-		private icon = new vscode.ThemeIcon("file")
+		private icon = new vscode.ThemeIcon("code")
 	) {
 		this.apexClassTreeItems = this.getApexClassTreeItems();
 	}

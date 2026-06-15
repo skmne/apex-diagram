@@ -16,7 +16,7 @@ class ApexDiagramController {
 	public readonly apexClassesTreeProvider: ApexClassTreeDataProvider;
 	public readonly diagramItemsTreeProvider: ApexClassTreeDataProvider;
 
-	private readonly apexClassesIcon = new vscode.ThemeIcon("file");
+	private readonly apexClassesIcon = new vscode.ThemeIcon("code");
 	private readonly diagramItemIcon = new vscode.ThemeIcon("symbol-class");
 	private readonly loadingIcon = new vscode.ThemeIcon("sync~spin");
 	private readonly addingNodeIds = new Set<string>();
