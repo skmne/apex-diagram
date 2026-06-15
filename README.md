@@ -20,16 +20,13 @@ The extension connects to the Salesforce org configured for the current workspac
 
 ## Preview
 
-Add screenshots or GIFs here before publishing.
+### Diagram Workspace
 
-Suggested assets:
+![Apex Diagram workspace showing Apex class dependencies](images/apex-diagram-workspace.png)
 
-- `images/apex-diagram-activity-bar.png`: show the Apex Diagram activity bar with the Apex Classes and Diagram Items views.
-- `images/apex-diagram-workspace.png`: show a populated diagram with inheritance, interface, and association links.
-- `images/apex-diagram-add-classes.gif`: show selecting one or more Apex classes and adding them to the diagram.
-- `images/apex-diagram-export.gif`: show exporting the diagram to SVG.
+### Add Classes And Export
 
-When the assets are ready, add them here as Markdown images with short alt text.
+![Adding Apex classes to a diagram and exporting SVG](images/apex-diagram-add-export-classes.gif)
 
 ## Requirements
 

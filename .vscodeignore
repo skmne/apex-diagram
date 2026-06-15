@@ -19,6 +19,7 @@ package-lock.json
 webpack.extension.config.js
 webpack.webview.config.js
 vsc-extension-quickstart.md
+image.png
 tsconfig*.json
 *.vsix
 **/.eslintrc.json
