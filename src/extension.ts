@@ -19,13 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	await setSalesforceWorkspaceContext(true);
-	const loadedData = await loadApexClasses(context, rootPath);
-	if (!loadedData) {
-		return;
-	}
-
-	const { tooling, apexClasses } = loadedData;
-	const controller = new ApexDiagramController(context, rootPath, tooling, apexClasses);
+	const controller = new ApexDiagramController(context, rootPath, () => loadApexClasses(context, rootPath));
 
 	context.subscriptions.push(
 		...registerApexClassTreeViews(controller),

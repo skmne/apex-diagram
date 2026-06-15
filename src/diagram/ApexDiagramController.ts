@@ -11,6 +11,7 @@ import { ToolingApi } from "../salesforceAPI/salesforceClient";
 import { clearSymbolTableCache } from "./symbolTableCacheCommands";
 
 type DiagramProgress = vscode.Progress<{ message?: string }>;
+type ApexDiagramDataLoader = () => Thenable<{ tooling: ToolingApi; apexClasses: ApexClass[] } | undefined>;
 
 class ApexDiagramController {
 	public readonly apexClassesTreeProvider: ApexClassTreeDataProvider;
@@ -21,14 +22,45 @@ class ApexDiagramController {
 	private readonly loadingIcon = new vscode.ThemeIcon("sync~spin");
 	private readonly addingNodeIds = new Set<string>();
 	private diagramDataState: DiagrammModel;
+	private tooling: ToolingApi | undefined;
+	private loadDataPromise: Promise<boolean> | undefined;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		rootPath: string,
-		private readonly tooling: ToolingApi,
-		apexClasses: ApexClass[]
+		private readonly loadData: ApexDiagramDataLoader
 	) {
 		this.diagramDataState = getStoredDiagramData(context);
+		this.apexClassesTreeProvider = new ApexClassTreeDataProvider(
+			rootPath,
+			[],
+			this.apexClassesIcon
+		);
+		this.diagramItemsTreeProvider = new ApexClassTreeDataProvider(
+			rootPath,
+			[],
+			this.diagramItemIcon
+		);
+	}
+
+	public async loadApexClasses(): Promise<boolean> {
+		if (this.tooling) {
+			return true;
+		}
+
+		this.loadDataPromise ??= this.loadAndApplyApexClasses();
+		return this.loadDataPromise;
+	}
+
+	private async loadAndApplyApexClasses(): Promise<boolean> {
+		const loadedData = await this.loadData();
+		if (!loadedData) {
+			this.loadDataPromise = undefined;
+			return false;
+		}
+
+		const { tooling, apexClasses } = loadedData;
+		this.tooling = tooling;
 		const restoredDiagramItemIds = new Set(
 			this.diagramDataState.nodes
 				.map((node) => node.id)
@@ -41,18 +73,20 @@ class ApexDiagramController {
 			!restoredDiagramItemIds.has(this.getApexClassId(apexClass))
 		);
 
-		this.apexClassesTreeProvider = new ApexClassTreeDataProvider(rootPath, inactiveApexClasses, this.apexClassesIcon);
-		this.diagramItemsTreeProvider = new ApexClassTreeDataProvider(
-			rootPath,
-			restoredDiagramItems,
-			this.diagramItemIcon
-		);
+		this.apexClassesTreeProvider.updateApexClasses(inactiveApexClasses);
+		this.diagramItemsTreeProvider.updateApexClasses(restoredDiagramItems);
 		this.diagramItemsTreeProvider.getItems().forEach((node) => this.markAsDiagramItem(node));
+		return true;
 	}
 
 	public async refreshApexClasses(progress: DiagramProgress): Promise<void> {
+		const isLoaded = await this.loadApexClasses();
+		if (!isLoaded) {
+			return;
+		}
+
 		progress.report({ message: "Refreshing Apex classes" });
-		const freshApexClasses = await this.tooling.getApexClasses();
+		const freshApexClasses = await this.getLoadedTooling().getApexClasses();
 		const diagramItemIds = new Set(this.diagramItemsTreeProvider.getItemIds());
 		this.apexClassesTreeProvider.updateApexClasses(
 			freshApexClasses.filter((apexClass) => !diagramItemIds.has(this.getApexClassId(apexClass)))
@@ -72,6 +106,11 @@ class ApexDiagramController {
 		selectedNodes: ApexClassTreeItem[] | undefined,
 		progress: DiagramProgress
 	): Promise<void> {
+		const isLoaded = await this.loadApexClasses();
+		if (!isLoaded) {
+			return;
+		}
+
 		const nodesToAdd = (selectedNodes ?? [node]).filter((item) => !this.addingNodeIds.has(item.id));
 		progress.report({ message: "Loading Apex class details..." });
 
@@ -161,7 +200,12 @@ class ApexDiagramController {
 		return vscode.commands.executeCommand("diagram-workspace.start");
 	}
 
-	public startWorkspace(): vscode.WebviewPanel {
+	public async startWorkspace(): Promise<vscode.WebviewPanel | undefined> {
+		const isLoaded = await this.loadApexClasses();
+		if (!isLoaded) {
+			return undefined;
+		}
+
 		vscode.commands.executeCommand("apex-classes-view.focus");
 		return this.getDiagramWorkspace().getWebviewPanel();
 	}
@@ -209,7 +253,15 @@ class ApexDiagramController {
 			return [];
 		}
 
-		return this.tooling.generateApexSymbolTable(apexClassNames);
+		return this.getLoadedTooling().generateApexSymbolTable(apexClassNames);
+	}
+
+	private getLoadedTooling(): ToolingApi {
+		if (!this.tooling) {
+			throw new Error("Apex classes have not been loaded.");
+		}
+
+		return this.tooling;
 	}
 
 	private markAsDiagramItem(node: ApexClassTreeItem): void {
