@@ -1,49 +1,26 @@
 # Diagram Workspace
 
-Это веб-интерфейс для отображения UML диаграмм Apex классов.
+This folder contains the browser-side webview UI for rendering Apex class dependency diagrams.
 
-## Структура
+## Files
 
-- `index.html` - HTML шаблон для webview
-- `index.js` - логика управления диаграммой (исходный файл)
-- `bundle.js` - собранный bundle (генерируется webpack, находится в `dist/webview/`)
+- `index.html` is the VS Code webview HTML template.
+- `index.js` contains the diagram UI logic and imports `@alesik/uml-diagram`.
+- `dist/webview/bundle.js` is the generated webview bundle. It is built from `index.js` by webpack.
 
-## Библиотеки
+## Build
 
-### UML Diagram (@alesik/uml-diagram)
+- `npm run build:webview` builds only the webview bundle.
+- `npm run watch:webview` rebuilds the webview bundle when files change.
+- `npm run compile` builds the webview bundle and the extension host TypeScript.
 
-Библиотека для отрисовки UML диаграмм, установленная через npm.
+## Runtime Flow
 
-**Важно:** Библиотека импортируется в `index.js` и включается в bundle при сборке webpack.
+1. Webpack uses `web/diagram-workspace/index.js` as the webview entry point.
+2. The `@alesik/uml-diagram` dependency is bundled into `dist/webview/bundle.js`.
+3. `DiagramWorkspaceProvider` reads `index.html`, injects the Content Security Policy, and rewrites `./bundle.js` to a VS Code webview URI.
+4. The webview posts messages back to the extension host for export, source preview, file opening, and diagram item removal.
 
-Для обновления библиотеки:
-1. Обновите версию: `npm update @alesik/uml-diagram`
-2. Запустите компиляцию: `npm run compile`
+## Notes
 
-## Как это работает
-
-1. **Сборка webview** (`npm run compile`):
-   - Запускается webpack с конфигурацией `webpack.webview.config.js`
-   - Webpack берет `index.js` как entry point
-   - Импортирует `@alesik/uml-diagram` из node_modules
-   - Собирает все в один файл `dist/webview/bundle.js` (~373KB)
-
-2. **Загрузка в VS Code**:
-   - `DiagramWorkspaceProvider.ts` читает `index.html`
-   - Заменяет `./bundle.js` на webview URI
-   - VS Code webview загружает собранный bundle
-
-## Команды
-
-- `npm run build:webview` - собрать webview bundle
-- `npm run watch:webview` - watch режим для webview (пересборка при изменениях)
-- `npm run compile` - полная компиляция (webview + TypeScript)
-
-## Преимущества webpack подхода
-
-✅ Стандартный подход для VS Code расширений
-✅ Автоматическое разрешение зависимостей
-✅ Минификация и оптимизация
-✅ Один bundle файл вместо множества
-✅ Tree shaking (удаление неиспользуемого кода)
-✅ Source maps для отладки
+Keep this folder browser-only. Extension-host logic, workspace file access, and VS Code API calls belong under `src/`.
