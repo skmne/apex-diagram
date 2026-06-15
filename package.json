@@ -2,10 +2,11 @@
   "name": "apex-diagram",
   "displayName": "Apex Diagram",
   "description": "Visualize Salesforce Apex class dependencies as an interactive UML-style diagram.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "alesik",
   "author": "Aliaksandr Lesik",
   "license": "MIT",
+  "icon": "resources/logo.png",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/skmne/apex-diagram.git"
