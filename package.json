@@ -39,6 +39,19 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Apex Diagram requires the desktop VS Code extension host, Salesforce CLI, and local workspace access."
+    },
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Apex Diagram runs Salesforce CLI commands and reads local workspace files, so the workspace must be trusted."
+    }
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [

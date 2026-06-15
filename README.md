@@ -33,6 +33,7 @@ When the assets are ready, add them here as Markdown images with short alt text.
 
 ## Requirements
 
+- Desktop Visual Studio Code. Apex Diagram does not support VS Code for the Web, including `vscode.dev` and `github.dev`.
 - Visual Studio Code `1.96.0` or newer.
 - Salesforce CLI installed and available from your terminal.
 - A Salesforce project opened as the active VS Code workspace.
@@ -80,6 +81,7 @@ Namespaced classes are matched by `namespace.name`. Non-namespaced classes are m
 
 ## Known Limitations
 
+- Desktop VS Code is required. The extension uses the Node.js extension host, Salesforce CLI, and local workspace APIs that are not available in VS Code for the Web.
 - The initial Apex class list hides likely test classes by name pattern. This is a performance-oriented heuristic and not a guaranteed `@IsTest` detector.
 - Relationships are shown only between classes included in the diagram input set.
 - Opening a class file depends on finding a matching local `.cls` file in the workspace.
