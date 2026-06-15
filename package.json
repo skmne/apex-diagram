@@ -37,7 +37,9 @@
     "Visualization",
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "workspaceContains:sfdx-project.json"
+  ],
   "main": "./dist/extension/extension.js",
   "extensionKind": [
     "workspace"
@@ -74,12 +76,14 @@
           "id": "diagram-items-view",
           "name": "Diagram Items",
           "contextualTitle": "Apex Diagram",
-          "visibility": "collapsed"
+          "visibility": "collapsed",
+          "when": "apexDiagram:salesforceWorkspace"
         },
         {
           "id": "apex-classes-view",
           "name": "Apex Classes",
-          "contextualTitle": "Apex Diagram"
+          "contextualTitle": "Apex Diagram",
+          "when": "apexDiagram:salesforceWorkspace"
         }
       ]
     },
@@ -135,6 +139,44 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "diagram-workspace.start",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "apex-classes-view.openWorkspace",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "apex-classes-view.refreshEntry",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "apex-classes-view.clearCache",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "diagram-workspace.clear",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "apex-classes-view.addEntry",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "apex-classes-view.addEntry.loading",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "diagram-items-view.removeEntry",
+          "when": "apexDiagram:salesforceWorkspace"
+        },
+        {
+          "command": "diagram-items-view.openFile",
+          "when": "apexDiagram:salesforceWorkspace"
+        }
+      ],
       "view/title": [
         {
           "command": "apex-classes-view.refreshEntry",

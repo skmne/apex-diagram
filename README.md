@@ -4,6 +4,8 @@ Apex Diagram is a Visual Studio Code extension for exploring Apex class dependen
 
 The extension connects to the Salesforce org configured for the current workspace, loads Apex classes through the Tooling API, and lets you build an interactive diagram from selected classes.
 
+> **Workspace detection:** Apex Diagram is shown and activated only when the opened workspace contains `sfdx-project.json`. In regular non-Salesforce folders, the extension stays hidden and does not try to connect to Salesforce.
+
 ## Features
 
 - Browse Apex classes from a dedicated **Apex Diagram** activity bar view.

@@ -9,10 +9,16 @@ import { getSalesforceUserInfo } from "./sfdx/sfdx";
 export async function activate(context: vscode.ExtensionContext) {
 	const rootPath = getWorkspaceRoot();
 	if (!rootPath) {
-		vscode.window.showInformationMessage("Apex Diagram: Open a Salesforce workspace folder to load Apex classes.");
+		await setSalesforceWorkspaceContext(false);
 		return;
 	}
 
+	if (!await isSalesforceWorkspace()) {
+		await setSalesforceWorkspaceContext(false);
+		return;
+	}
+
+	await setSalesforceWorkspaceContext(true);
 	const loadedData = await loadApexClasses(context, rootPath);
 	if (!loadedData) {
 		return;
@@ -31,6 +37,14 @@ function getWorkspaceRoot(): string | undefined {
 	return vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 		? vscode.workspace.workspaceFolders[0].uri.fsPath
 		: undefined;
+}
+
+async function isSalesforceWorkspace(): Promise<boolean> {
+	return (await vscode.workspace.findFiles("sfdx-project.json", "**/node_modules/**", 1)).length > 0;
+}
+
+function setSalesforceWorkspaceContext(isSalesforceWorkspace: boolean): Thenable<void> {
+	return vscode.commands.executeCommand("setContext", "apexDiagram:salesforceWorkspace", isSalesforceWorkspace);
 }
 
 function loadApexClasses(
