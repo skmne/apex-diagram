@@ -24,11 +24,11 @@ The extension connects to the Salesforce org configured for the current workspac
 
 ### Diagram Workspace
 
-![Apex Diagram workspace showing Apex class dependencies](images/apex-diagram-workspace.png)
+![Apex Diagram workspace showing Apex class dependencies](https://raw.githubusercontent.com/skmne/apex-diagram/main/images/apex-diagram-workspace.png)
 
 ### Add Classes And Export
 
-![Adding Apex classes to a diagram and exporting SVG](images/apex-diagram-add-export-classes.gif)
+![Adding Apex classes to a diagram and exporting SVG](https://raw.githubusercontent.com/skmne/apex-diagram/main/images/apex-diagram-add-export-classes.gif)
 
 ## Requirements
 
