@@ -86,10 +86,22 @@ class SymbolTableCache {
 
 	private async readApexClassMemberFromCache(filePath: string): Promise<ApexClassMember | undefined> {
 		try {
-			return JSON.parse(await fs.readFile(filePath, "utf8")) as ApexClassMember;
+			const cachedMember = JSON.parse(await fs.readFile(filePath, "utf8")) as ApexClassMember;
+			return this.isValidCachedApexClassMember(cachedMember) ? cachedMember : undefined;
 		} catch {
 			return undefined;
 		}
+	}
+
+	private isValidCachedApexClassMember(value: ApexClassMember | undefined): value is ApexClassMember {
+		const symbolTable = value?.SymbolTable;
+
+		return Boolean(
+			symbolTable &&
+			typeof symbolTable.name === "string" &&
+			Array.isArray(symbolTable.interfaces) &&
+			Array.isArray(symbolTable.externalReferences)
+		);
 	}
 
 	private getClassCacheKey(namespace: string | undefined, name: string): string {

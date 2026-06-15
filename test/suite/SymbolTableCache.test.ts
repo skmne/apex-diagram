@@ -102,4 +102,31 @@ suite("SymbolTableCache", () => {
 			assert.strictEqual(result.uncachedApexClasses[0].Name, "InvoiceService");
 		});
 	});
+
+	test("treats invalid cached symbol tables as uncached", async () => {
+		const date = new Date("2026-01-01T00:00:00.000Z");
+
+		await withCache(async (cache, state) => {
+			await cache.save([member("InvoiceService", date)]);
+			const cacheEntry = state.get<{ filePath: string }>(state.keys()[0]);
+			await fs.writeFile(
+				cacheEntry!.filePath,
+				JSON.stringify({
+					Id: "InvoiceService",
+					LastSyncDate: date,
+					SymbolTable: {
+						name: "InvoiceService",
+					},
+				}),
+				"utf8"
+			);
+
+			const result = await cache.getCachedAndUncachedApexClasses([
+				apexClass("InvoiceService", date),
+			]);
+
+			assert.deepStrictEqual(result.cachedApexClassMembers, []);
+			assert.strictEqual(result.uncachedApexClasses[0].Name, "InvoiceService");
+		});
+	});
 });
