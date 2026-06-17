@@ -78,6 +78,8 @@ Dependency information is generated from Salesforce Apex symbol tables. Links ar
 
 Namespaced classes are matched by `namespace.name`. Non-namespaced classes are matched by `name`.
 
+References declared inside Apex inner classes are analyzed as dependencies of the top-level Apex class. If another selected class references an inner class, the relationship is shown against the owning top-level class node.
+
 ## Known Limitations
 
 - Desktop VS Code is required. The extension uses the Node.js extension host, Salesforce CLI, and local workspace APIs that are not available in VS Code for the Web.
@@ -94,6 +96,6 @@ Namespaced classes are matched by `namespace.name`. Non-namespaced classes are m
 
 ## Release Notes
 
-### 0.0.1
+### 0.1.2
 
-Initial preview release.
+Fixes dependency detection for references declared inside Apex inner classes.

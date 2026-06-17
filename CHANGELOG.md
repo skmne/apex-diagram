@@ -2,6 +2,20 @@
 
 All notable changes to Apex Diagram will be documented in this file.
 
+## [0.1.2] - 2026-06-18
+
+### Fixed
+
+- Added dependency detection for Apex references declared inside inner classes.
+- References to selected inner classes are mapped back to their top-level Apex class node.
+- Duplicate and self-referencing links are ignored when inner class dependencies are analyzed.
+
+## [0.1.1] - 2026-06-15
+
+### Changed
+
+- Added the Marketplace icon and updated extension activity bar icons.
+
 ## [0.1.0] - 2026-06-15
 
 ### Added

@@ -1,8 +1,41 @@
 import * as assert from "assert";
 import { parseDependency } from "../../src/analyzer/dependencyAnalyzer";
 import { ApexClassMember } from "../../src/salesforceAPI/ApexClassMember";
+import { SymbolTable } from "../../src/salesforceAPI/SymbolTable";
 
 type Ref = { name: string; namespace?: string };
+
+function symbolTable(
+	name: string,
+	opts: {
+		namespace?: string;
+		parentClass?: string;
+		interfaces?: string[];
+		externalReferences?: Ref[];
+		innerClasses?: SymbolTable[];
+	} = {}
+): SymbolTable {
+	return {
+		id: name,
+		name,
+		namespace: opts.namespace ?? "",
+		parentClass: opts.parentClass,
+		interfaces: opts.interfaces ?? [],
+		externalReferences: (opts.externalReferences ?? []).map((ref) => ({
+			name: ref.name,
+			namespace: ref.namespace ?? "",
+			methods: [],
+			references: [],
+			variables: [],
+		})),
+		constructors: [],
+		innerClasses: opts.innerClasses ?? [],
+		key: undefined,
+		methods: [],
+		tableDeclaration: undefined,
+		variables: [],
+	};
+}
 
 function member(
 	name: string,
@@ -11,31 +44,13 @@ function member(
 		parentClass?: string;
 		interfaces?: string[];
 		externalReferences?: Ref[];
+		innerClasses?: SymbolTable[];
 	} = {}
 ): ApexClassMember {
 	return {
 		Id: name,
 		LastSyncDate: new Date(0),
-		SymbolTable: {
-			id: name,
-			name,
-			namespace: opts.namespace ?? "",
-			parentClass: opts.parentClass,
-			interfaces: opts.interfaces ?? [],
-			externalReferences: (opts.externalReferences ?? []).map((ref) => ({
-				name: ref.name,
-				namespace: ref.namespace ?? "",
-				methods: [],
-				references: [],
-				variables: [],
-			})),
-			constructors: [],
-			innerClasses: [],
-			key: undefined,
-			methods: [],
-			tableDeclaration: undefined,
-			variables: [],
-		},
+		SymbolTable: symbolTable(name, opts),
 	};
 }
 
@@ -111,6 +126,67 @@ suite("parseDependency", () => {
 			member("Logger", { namespace: "pkg" }),
 			member("InvoiceService", {
 				externalReferences: [{ name: "Logger" }],
+			}),
+		]);
+
+		assert.deepStrictEqual(model.links, []);
+	});
+
+	test("creates links from dependencies declared inside inner classes", () => {
+		const model = parseDependency([
+			member("Logger"),
+			member("InvoiceService", {
+				innerClasses: [
+					symbolTable("Request", {
+						externalReferences: [{ name: "Logger" }],
+					}),
+				],
+			}),
+		]);
+
+		assert.deepStrictEqual(linkKeys(model), [
+			"InvoiceService->Logger:Directed Association",
+		]);
+	});
+
+	test("deduplicates links collected from top-level and inner classes", () => {
+		const model = parseDependency([
+			member("Logger"),
+			member("InvoiceService", {
+				externalReferences: [{ name: "Logger" }],
+				innerClasses: [
+					symbolTable("Request", {
+						externalReferences: [{ name: "Logger" }],
+					}),
+				],
+			}),
+		]);
+
+		assert.deepStrictEqual(linkKeys(model), [
+			"InvoiceService->Logger:Directed Association",
+		]);
+	});
+
+	test("maps references to an inner class back to its top-level class", () => {
+		const model = parseDependency([
+			member("Outer", {
+				innerClasses: [symbolTable("Inner")],
+			}),
+			member("Consumer", {
+				externalReferences: [{ name: "Outer.Inner" }],
+			}),
+		]);
+
+		assert.deepStrictEqual(linkKeys(model), [
+			"Consumer->Outer:Directed Association",
+		]);
+	});
+
+	test("does not create self-links for references to own inner classes", () => {
+		const model = parseDependency([
+			member("Outer", {
+				externalReferences: [{ name: "Outer.Inner" }],
+				innerClasses: [symbolTable("Inner")],
 			}),
 		]);
 
