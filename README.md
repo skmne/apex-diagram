@@ -20,6 +20,16 @@ The extension connects to the Salesforce org configured for the current workspac
 - Export the current diagram as SVG.
 - Clear the local Apex symbol table cache when Salesforce metadata changes or cached data looks stale.
 
+## Preview
+
+### Diagram Workspace
+
+![Apex Diagram workspace showing Apex class dependencies](https://raw.githubusercontent.com/skmne/apex-diagram/main/images/apex-diagram-workspace.png)
+
+### Add Classes And Export
+
+![Adding Apex classes to a diagram and exporting SVG](https://raw.githubusercontent.com/skmne/apex-diagram/main/images/apex-diagram-add-export-classes.gif)
+
 ## Requirements
 
 - Desktop Visual Studio Code. Apex Diagram does not support VS Code for the Web, including `vscode.dev` and `github.dev`.
@@ -88,7 +98,7 @@ References declared inside Apex inner classes are analyzed as dependencies of th
 
 ### 0.1.3
 
-Removes the Visual Studio Marketplace preview flag and preview screenshots from the README.
+Removes the Visual Studio Marketplace preview flag.
 
 ### 0.1.2
 
