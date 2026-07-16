@@ -96,6 +96,10 @@ References declared inside Apex inner classes are analyzed as dependencies of th
 
 ## Release Notes
 
+### 0.1.5
+
+Republishes the README preview image restoration after version 0.1.4 was already used.
+
 ### 0.1.4
 
 Restores the README preview images while keeping the extension out of Marketplace preview.
