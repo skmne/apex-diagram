@@ -96,6 +96,10 @@ References declared inside Apex inner classes are analyzed as dependencies of th
 
 ## Release Notes
 
+### 0.1.4
+
+Restores the README preview images while keeping the extension out of Marketplace preview.
+
 ### 0.1.3
 
 Removes the Visual Studio Marketplace preview flag.
